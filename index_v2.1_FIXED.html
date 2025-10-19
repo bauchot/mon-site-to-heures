@@ -1,0 +1,3175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Releve Heures v2.0</title>
+    <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .header p { font-size: 16px; opacity: 0.9; }
+        
+        .login-page {
+            padding: 60px 30px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .login-page h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 40px;
+            font-size: 28px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 20px;
+            margin: 10px 0;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        .btn-enzo { background: #667eea; }
+        .btn-isabelle { background: #f093fb; }
+        .btn-stephane { background: #4facfe; }
+        .btn-patron { background: #43e97b; }
+        
+        .main-content {
+            display: none;
+            padding: 30px;
+        }
+        .main-content.active { display: block; }
+        
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .user-info h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .user-info p {
+            color: #666;
+            font-size: 14px;
+        }
+        .btn-logout {
+            padding: 12px 25px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .input-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .input-form h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .btn-submit {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 2px solid #ffc107;
+            display: none;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px 10px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 13px;
+            text-align: center;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .week-total {
+            background: #fff9c4 !important;
+            font-weight: 600;
+        }
+        
+        .btn-action {
+            padding: 6px 12px;
+            margin: 0 3px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            background: #F44336;
+            color: white;
+        }
+        
+        /* Styles pour la sélection des semaines */
+        .export-section {
+            background: #f0f7ff;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 2px solid #667eea;
+        }
+        .export-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .weeks-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .week-checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.2s;
+        }
+        .week-checkbox-item:hover {
+            background: #e8f4ff;
+            border-color: #667eea;
+        }
+        .week-checkbox-item.selected {
+            background: #e8f4ff;
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+        .week-checkbox-item input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        .week-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .week-label {
+            font-weight: 600;
+            color: #333;
+            font-size: 15px;
+            margin-bottom: 3px;
+        }
+        .week-details {
+            font-size: 13px;
+            color: #666;
+        }
+        .export-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .btn-select-all {
+            padding: 12px 25px;
+            background: #43e97b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-select-all:hover {
+            background: #38d66b;
+            transform: translateY(-2px);
+        }
+        .btn-export-whatsapp {
+            padding: 15px 30px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            flex: 1;
+            justify-content: center;
+            min-width: 200px;
+        }
+        .btn-export-whatsapp:hover {
+            background: #20ba5a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+        }
+        .btn-export-whatsapp:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .selection-summary {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .selection-summary strong {
+            color: #667eea;
+            font-size: 16px;
+        }
+        
+        .patron-dashboard {
+            display: none;
+        }
+        .patron-dashboard.active {
+            display: block;
+        }
+        .employee-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .employee-tab {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 200px;
+        }
+        .employee-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .employee-tab.active {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            transform: scale(1.05);
+        }
+        .tab-enzo { background: #667eea; }
+        .tab-isabelle { background: #f093fb; }
+        .tab-stephane { background: #4facfe; }
+        .tab-overview { background: #43e97b; }
+        .tab-gestion { background: #ff6b6b; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .stat-card h4 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .week-navigation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .week-navigation button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .week-navigation span {
+            font-size: 18px;
+            font-weight: bold;
+            min-width: 200px;
+            text-align: center;
+        }
+        
+        .pdf-export-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 3px solid #667eea;
+        }
+        .pdf-export-section h3 {
+            color: #667eea;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+        .pdf-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .pdf-controls .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .pdf-controls label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .pdf-controls select,
+        .pdf-controls input {
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        .pdf-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn-pdf {
+            padding: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn-pdf:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .btn-pdf-week {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .btn-pdf-month {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        /* NOUVEAUX STYLES POUR GESTION DES SALARIÉS */
+        .gestion-salaries-section {
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 3px solid #ff6b6b;
+        }
+        
+        .gestion-salaries-section h3 {
+            color: #ff6b6b;
+            font-size: 24px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .employees-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .employee-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+            position: relative;
+        }
+        
+        .employee-card.inactive {
+            opacity: 0.6;
+            border-left-color: #999;
+        }
+        
+        .employee-card h4 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .employee-card p {
+            color: #666;
+            font-size: 13px;
+            margin: 5px 0;
+        }
+        
+        .employee-card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-edit {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .btn-archive {
+            padding: 8px 15px;
+            background: #FF9800;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .btn-delete {
+            padding: 8px 15px;
+            background: #F44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .btn-add-employee {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 50px auto;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .modal-header h3 {
+            color: #333;
+            font-size: 24px;
+        }
+        
+        .close-modal {
+            font-size: 30px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+        }
+        
+        .form-section h4 {
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .horaires-grid {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .horaire-row {
+            display: grid;
+            grid-template-columns: 100px 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .horaire-row label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .horaire-row input {
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .badge-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Application Releve d'Heures v2.0</h1>
+            <p>Interface Patron Complete - Gestion des Salariés</p>
+        </div>
+
+        <div id="loginPage" class="login-page">
+            <h2>Connexion</h2>
+            <div id="employeeLoginButtons"></div>
+            <button class="login-btn btn-patron" onclick="requestPatronPassword()">Patron Admin</button>
+
+                </div>
+
+        <div id="mainContent" class="main-content">
+            <div class="top-bar">
+                <div class="user-info">
+                    <h2 id="userName"></h2>
+                    <p id="userRole"></p>
+                    <p><strong>Semaine:</strong> <span id="currentWeek"></span></p>
+                </div>
+                <button class="btn-logout" onclick="doLogout()">Deconnexion</button>
+            </div>
+
+            <div id="employeeInterface">
+                <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 3px solid #667eea;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">📊 Gestion des données</h3>
+                    
+                    <div id="monthIndicator" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #667eea;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="font-size: 16px;">📅 Mois en cours :</strong>
+                                <span id="currentMonthName" style="font-size: 16px; color: #667eea; margin-left: 10px;"></span>
+                            </div>
+                            <div>
+                                <strong>📊 Jours enregistrés :</strong>
+                                <span id="daysCount" style="font-size: 18px; color: #4CAF50; margin-left: 10px; font-weight: bold;"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <button onclick="doExportWeek()" style="padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                            📤 Exporter cette semaine
+                        </button>
+                        
+                        <button id="btnNewMonth" onclick="doNewMonth()" style="padding: 15px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600; display: none;">
+                            🗑️ Nouveau mois
+                        </button>
+                    </div>
+                    
+                    <div id="newMonthInfo" style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 6px; font-size: 13px; color: #856404; display: none;">
+                        ℹ️ Le changement de mois sera disponible après le 25
+                    </div>
+                    
+                    <!-- Affichage du fichier exporté -->
+                    <div id="exportDisplay" style="display: none; margin-top: 20px; padding: 20px; background: #e8f5e9; border-radius: 10px; border: 2px solid #4CAF50;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 15px;">
+                            <div style="flex: 1;">
+                                <p style="margin: 0 0 15px 0; font-size: 14px; color: #2e7d32; font-weight: 600;">
+                                    ✅ Export réussi !
+                                </p>
+                                
+                                <!-- Nom du fichier -->
+                                <div style="margin-bottom: 15px; padding: 12px; background: white; border: 2px solid #4CAF50; border-radius: 8px;">
+                                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">📄 Fichier :</div>
+                                    <div id="exportFileName" style="font-weight: 600; color: #333; word-break: break-all;"></div>
+                                </div>
+                                
+                                <!-- Boutons d'action -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                                    <button onclick="copyExportData()" id="exportCopyBtn" style="
+                                        padding: 12px;
+                                        background: #2196F3;
+                                        color: white;
+                                        border: none;
+                                        border-radius: 8px;
+                                        cursor: pointer;
+                                        font-size: 14px;
+                                        font-weight: 600;
+                                        transition: all 0.3s;
+                                    ">
+                                        📋 Copier
+                                    </button>
+                                    
+                                    <button onclick="shareToWhatsApp()" id="exportWhatsAppBtn" style="
+                                        padding: 12px;
+                                        background: #25D366;
+                                        color: white;
+                                        border: none;
+                                        border-radius: 8px;
+                                        cursor: pointer;
+                                        font-size: 14px;
+                                        font-weight: 600;
+                                        transition: all 0.3s;
+                                    ">
+                                        📱 WhatsApp
+                                    </button>
+                                </div>
+                                
+                                <p style="margin: 0; font-size: 11px; color: #666; line-height: 1.4;">
+                                    💡 <strong>Copier :</strong> copie dans le presse-papier<br>
+                                    💡 <strong>WhatsApp :</strong> ouvre WhatsApp avec les données
+                                </p>
+                            </div>
+                            <button onclick="hideExportDisplay()" style="padding: 8px 16px; background: #ff6b6b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; flex-shrink: 0;">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Contenu JSON caché pour la copie -->
+                    <textarea id="exportContent" style="position: absolute; left: -9999px;"></textarea>
+                </div>
+
+                <!-- NOUVELLE SECTION: Sélection et export de semaines -->
+                <div class="export-section">
+                    <h3>📤 Envoyer mes heures via WhatsApp</h3>
+                    <div class="selection-summary">
+                        <strong>Sélectionnez les semaines à envoyer :</strong>
+                        <span id="selectionCount" style="margin-left: 10px; color: #666;">Aucune semaine sélectionnée</span>
+                    </div>
+                    <div class="weeks-selector" id="weeksSelector">
+                        <p style="text-align: center; color: #999; padding: 20px;">Aucune donnée disponible</p>
+                    </div>
+                    <div class="export-actions">
+                        <button class="btn-select-all" onclick="toggleSelectAllWeeks()">✓ Tout sélectionner / Tout désélectionner</button>
+                        <button class="btn-export-whatsapp" onclick="exportSelectedWeeksToWhatsApp()" id="btnExportWhatsApp" disabled>
+                            <span style="font-size: 24px;">📱</span>
+                            Envoyer via WhatsApp
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-form">
+                    <h3>Saisie des heures</h3>
+                    <div id="messageContainer"></div>
+                    <div id="warningRectif" class="warning">
+                        <strong>ATTENTION:</strong> Une entree existe deja pour cette date. Cochez RECTIFICATION pour la remplacer.
+                    </div>
+                    <form onsubmit="return doAddEntry(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Date *</label>
+                                <input type="date" id="inputDate" required onchange="checkDateExists()">
+                            </div>
+                            <div class="form-group">
+                                <label>Chantier *</label>
+                                <input type="text" id="inputChantier" required list="chantierList" oninput="onChantierInput()">
+                                <datalist id="chantierList"></datalist>
+                            </div>
+                            <div class="form-group">
+                                <label>Zone *</label>
+                                <select id="inputZone" required>
+                                    <option value="">Selectionner...</option>
+                                    <option value="Z0">Z0 - Atelier</option>
+                                    <option value="Z1">Z1 - 15min</option>
+                                    <option value="Z2">Z2 - 30min</option>
+                                    <option value="Z3">Z3 - 45min</option>
+                                    <option value="Z4">Z4 - 1h</option>
+                                    <option value="Z5">Z5 - 1h15</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Debut (ex: 0815) *</label>
+                                <input type="text" id="inputDebut" placeholder="0800" required maxlength="4">
+                            </div>
+                            <div class="form-group">
+                                <label>Pause *</label>
+                                <select id="inputPause" required>
+                                    <option value="0">0h00</option>
+                                    <option value="60" selected>1h00</option>
+                                    <option value="90">1h30</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Fin (ex: 1730) *</label>
+                                <input type="text" id="inputFin" placeholder="1730" required maxlength="4">
+                            </div>
+                        </div>
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" id="inputDecouche">
+                                Decouche
+                            </label>
+                            <label>
+                                <input type="checkbox" id="inputAbsence">
+                                Absence
+                            </label>
+                            <label>
+                                <input type="checkbox" id="inputCP">
+                                Conge Paye
+                            </label>
+                            <label id="rectifLabel" style="display: none; color: #f44336; font-weight: bold;">
+                                <input type="checkbox" id="inputRectif">
+                                RECTIFICATION
+                            </label>
+                        </div>
+                        <button type="submit" class="btn-submit">Ajouter</button>
+                    </form>
+                </div>
+
+                <h3>Releve semaine</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Jour</th>
+                            <th>Zone</th>
+                            <th>Chantier</th>
+                            <th>Debut</th>
+                            <th>Pause</th>
+                            <th>Fin</th>
+                            <th>Trajet</th>
+                            <th>H.Eff</th>
+                            <th>H.Pay</th>
+                            <th>H.Sup</th>
+                            <th>Compteur</th>
+                            <th>Panier</th>
+                            <th>Dec</th>
+                            <th>Act</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+            </div>
+
+            <div id="patronInterface" class="patron-dashboard">
+            <div style="margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; box-shadow: 0 4px 10px rgba(102,126,234,0.5); max-width: 320px; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <label for="newPatronPassword" style="display: block; margin-bottom: 10px; font-siVoilà ce que cela donne. Dis-moi exactement de quel numéro de ligne quel numéro de ligne je dois supprimerze: 1.1em; font-weight: 600;">Nouveau mot de passe Patron :</label>
+  <input type="password" id="newPatronPassword" placeholder="Entrez un nouveau mot de passe" style="width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 1em; box-sizing: border-box;" />
+  <button onclick="updatePatronPassword()" style="margin-top: 15px; padding: 12px 20px; border: none; border-radius: 10px; background: #ffe600; color: #333; font-weight: 700; cursor: pointer; transition: background 0.3s ease;">Modifier le mot de passe</button>
+  <p id="passwordMessage" style="color: #e3ff00; margin-top: 12px; font-weight: 700;"></p>
+</div>
+
+                <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 3px solid #43e97b;">
+                    <h3 style="color: #43e97b; margin-bottom: 20px; font-size: 22px;">📥 Importer les données des salariés</h3>
+                    
+                    <!-- Option 1: Import par fichier -->
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h4 style="color: #333; margin-bottom: 15px; font-size: 16px;">📁 Option 1 : Importer un fichier .json</h4>
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <input type="file" id="importFile" accept=".json" style="flex: 1; min-width: 250px; padding: 12px; border: 2px solid #43e97b; border-radius: 8px; font-size: 14px;">
+                            <button onclick="doImportData()" style="padding: 12px 30px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                                📥 Importer le fichier
+                            </button>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                            💾 Pour les fichiers téléchargés ou reçus par email
+                        </p>
+                    </div>
+                    
+                    <!-- Option 2: Import par copier-coller -->
+                    <div style="background: white; padding: 20px; border-radius: 10px;">
+                        <h4 style="color: #333; margin-bottom: 15px; font-size: 16px;">📋 Option 2 : Coller directement le JSON</h4>
+                        <textarea id="importTextarea" placeholder="Collez ici le contenu JSON reçu par WhatsApp ou autre..." style="
+                            width: 100%;
+                            height: 150px;
+                            padding: 12px;
+                            border: 2px solid #43e97b;
+                            border-radius: 8px;
+                            font-family: 'Courier New', monospace;
+                            font-size: 12px;
+                            resize: vertical;
+                            margin-bottom: 10px;
+                        "></textarea>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="doImportFromText()" style="flex: 1; padding: 12px 30px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                                📥 Importer le texte
+                            </button>
+                            <button onclick="clearImportText()" style="padding: 12px 20px; background: #ff6b6b; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600;">
+                                🗑️ Effacer
+                            </button>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                            📱 Pour les messages WhatsApp ou textes copiés
+                        </p>
+                    </div>
+                </div>
+
+                <div class="pdf-export-section">
+                    <h3>📄 Export PDF - Feuilles d'Heures</h3>
+                    <div class="pdf-controls">
+                        <div class="form-group">
+                            <label>Salarié</label>
+                            <select id="pdfEmployee"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Mois</label>
+                            <select id="pdfMonth">
+                                <option value="1">Janvier</option>
+                                <option value="2">Février</option>
+                                <option value="3">Mars</option>
+                                <option value="4">Avril</option>
+                                <option value="5">Mai</option>
+                                <option value="6">Juin</option>
+                                <option value="7">Juillet</option>
+                                <option value="8">Août</option>
+                                <option value="9">Septembre</option>
+                                <option value="10" selected>Octobre</option>
+                                <option value="11">Novembre</option>
+                                <option value="12">Décembre</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Semaine (pour export semaine)</label>
+                            <input type="number" id="pdfWeek" min="1" max="52" value="42">
+                        </div>
+                    </div>
+                    <div class="pdf-buttons">
+                        <button class="btn-pdf btn-pdf-week" onclick="generateWeekPDF()">
+                            📄 Exporter la Semaine
+                        </button>
+                        <button class="btn-pdf btn-pdf-month" onclick="generateMonthPDF()">
+                            📑 Exporter le Mois Complet
+                        </button>
+                    </div>
+                </div>
+
+                <div class="employee-tabs">
+                    <button class="employee-tab tab-gestion" onclick="doShowTab('gestion')">👥 GESTION SALARIÉS</button>
+                    <button class="employee-tab tab-overview active" onclick="doShowTab('overview')">VUE ENSEMBLE</button>
+                    <div id="dynamicEmployeeTabs"></div>
+                </div>
+
+                <div id="gestionSection" style="display: none;">
+                    <div class="gestion-salaries-section">
+                        <h3>👥 Gestion des Salariés</h3>
+                        
+                        <div class="employees-list" id="employeesList"></div>
+                        
+                        <button class="btn-add-employee" onclick="openEmployeeModal()">
+                            ➕ Ajouter un nouveau salarié
+                        </button>
+                    </div>
+                </div>
+
+                <div id="overviewSection">
+                    <h3>Statistiques generales</h3>
+                    <div class="stats-grid" id="overviewStats"></div>
+                </div>
+
+                <div id="employeeSection" style="display: none;">
+                    <div class="stats-grid" id="employeeStats"></div>
+                    
+                    <div style="background:#f8f9fa;padding:20px;border-radius:10px;margin-bottom:20px">
+                        <h4 style="margin-bottom:15px;color:#333">⚙️ Compteur initial : <span id="compteurEmployeeName"></span></h4>
+                        <div style="display:flex;gap:15px;align-items:center">
+                            <div style="flex:1">
+                                <label style="display:block;margin-bottom:5px;font-weight:600;font-size:14px">Heures (ex: -10 ou +5 ou 0)</label>
+                                <input type="number" id="compteurInitialInput" step="0.25" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:6px;font-size:16px">
+                            </div>
+                            <button id="btnModifierCompteur" class="btn-submit" style="margin-top:20px;background:#43e97b">Modifier</button>
+                        </div>
+                        <p style="margin-top:10px;font-size:12px;color:#666">⚠️ Modifier le compteur recalculera automatiquement tous les relevés</p>
+                    </div>
+                    
+                    <div class="week-navigation">
+                        <button onclick="doChangeWeek(-1)">← Precedente</button>
+                        <span id="patronWeekDisplay"></span>
+                        <button onclick="doChangeWeek(1)">Suivante →</button>
+                    </div>
+
+                    <div class="input-form">
+                        <h3>Ajouter pour <span id="selectedEmployeeName"></span></h3>
+                        <div id="patronMessageContainer"></div>
+                        <div id="patronWarningRectif" class="warning">
+                            <strong>ATTENTION:</strong> Une entree existe deja pour cette date. Cochez RECTIFICATION pour la remplacer.
+                        </div>
+                        <form onsubmit="return doAddPatronEntry(event)">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Date *</label>
+                                    <input type="date" id="patronInputDate" required onchange="checkPatronDateExists()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Chantier *</label>
+                                    <input type="text" id="patronInputChantier" required list="patronChantierList" oninput="onPatronChantierInput()">
+                                    <datalist id="patronChantierList"></datalist>
+                                </div>
+                                <div class="form-group">
+                                    <label>Zone *</label>
+                                    <select id="patronInputZone" required>
+                                        <option value="">Selectionner...</option>
+                                        <option value="Z0">Z0</option>
+                                        <option value="Z1">Z1</option>
+                                        <option value="Z2">Z2</option>
+                                        <option value="Z3">Z3</option>
+                                        <option value="Z4">Z4</option>
+                                        <option value="Z5">Z5</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Debut *</label>
+                                    <input type="text" id="patronInputDebut" placeholder="0800" required maxlength="4">
+                                </div>
+                                <div class="form-group">
+                                    <label>Pause *</label>
+                                    <select id="patronInputPause" required>
+                                        <option value="0">0h00</option>
+                                        <option value="60" selected>1h00</option>
+                                        <option value="90">1h30</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Fin *</label>
+                                    <input type="text" id="patronInputFin" placeholder="1730" required maxlength="4">
+                                </div>
+                            </div>
+                            <div class="checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="patronInputDecouche">
+                                    Decouche
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="patronInputAbsence">
+                                    Absence
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="patronInputCP">
+                                    Conge Paye
+                                </label>
+                                <label id="patronRectifLabel" style="display: none; color: #f44336; font-weight: bold;">
+                                    <input type="checkbox" id="patronInputRectif">
+                                    RECTIFICATION
+                                </label>
+                            </div>
+                            <button type="submit" class="btn-submit">Ajouter</button>
+                        </form>
+                    </div>
+
+                    <h3>Releve semaine</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Jour</th>
+                                <th>Zone</th>
+                                <th>Chantier</th>
+                                <th>Debut</th>
+                                <th>Pause</th>
+                                <th>Fin</th>
+                                <th>Trajet</th>
+                                <th>H.Eff</th>
+                                <th>H.Pay</th>
+                                <th>H.Sup</th>
+                                <th>Compteur</th>
+                                <th>Panier</th>
+                                <th>Dec</th>
+                                <th>Act</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patronTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ajout/Edition Salarié -->
+    <div id="employeeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Ajouter un salarié</h3>
+                <button class="close-modal" onclick="closeEmployeeModal()">&times;</button>
+            </div>
+            
+            <form id="employeeForm" onsubmit="return saveEmployee(event)">
+                <input type="hidden" id="editEmployeeId">
+                
+                <div class="form-section">
+                    <h4>📋 Informations personnelles</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nom *</label>
+                            <input type="text" id="empNom" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Prénom *</label>
+                            <input type="text" id="empPrenom" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Date de naissance</label>
+                            <input type="date" id="empDateNaissance">
+                        </div>
+                        <div class="form-group">
+                            <label>Lieu de naissance</label>
+                            <input type="text" id="empLieuNaissance">
+                        </div>
+                        <div class="form-group">
+                            <label>Numéro de sécurité sociale</label>
+                            <input type="text" id="empNumeroSecu" maxlength="15">
+                        </div>
+                        <div class="form-group">
+                            <label>Téléphone</label>
+                            <input type="tel" id="empTelephone">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="empEmail">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>🏠 Adresse</h4>
+                    <div class="form-grid">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>Adresse</label>
+                            <input type="text" id="empAdresse">
+                        </div>
+                        <div class="form-group">
+                            <label>Code postal</label>
+                            <input type="text" id="empCodePostal" maxlength="5">
+                        </div>
+                        <div class="form-group">
+                            <label>Ville</label>
+                            <input type="text" id="empVille">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>💼 Informations professionnelles</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Fonction *</label>
+                            <select id="empFonction" required>
+                                <option value="">Sélectionner...</option>
+                                <option value="Ouvrier">Ouvrier</option>
+                                <option value="Secrétaire">Secrétaire</option>
+                                <option value="Chef de chantier">Chef de chantier</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Date d'embauche</label>
+                            <input type="date" id="empDateEmbauche">
+                        </div>
+                        <div class="form-group">
+                            <label>Heures hebdomadaires *</label>
+                            <input type="number" id="empHeuresHebdo" required min="0" max="48" step="0.5" value="35">
+                        </div>
+                        <div class="form-group">
+                            <label>Zone par défaut *</label>
+                            <select id="empZoneDefaut" required>
+                                <option value="Z0">Z0 - Atelier</option>
+                                <option value="Z1">Z1 - 15min</option>
+                                <option value="Z2">Z2 - 30min</option>
+                                <option value="Z3">Z3 - 45min</option>
+                                <option value="Z4">Z4 - 1h</option>
+                                <option value="Z5">Z5 - 1h15</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Couleur thème</label>
+                            <input type="color" id="empCouleur" value="#667eea">
+                        </div>
+                        <div class="form-group">
+                            <label>Compteur initial (heures)</label>
+                            <input type="number" id="empCompteurInitial" step="0.25" value="0">
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="empPanierActif" checked>
+                            <span>Panier repas activé</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>⏰ Horaires hebdomadaires</h4>
+                    <div class="horaires-grid">
+                        <div class="horaire-row">
+                            <label>Lundi</label>
+                            <input type="text" id="horaireL_debut" placeholder="0800" maxlength="4">
+                            <input type="text" id="horaireL_fin" placeholder="1730" maxlength="4">
+                            <select id="horaireL_pause">
+                                <option value="0">0h</option>
+                                <option value="60" selected>1h</option>
+                                <option value="90">1h30</option>
+                            </select>
+                            <input type="number" id="horaireL_heures" placeholder="7.75" step="0.25" readonly style="background: #f0f0f0;">
+                        </div>
+                        <div class="horaire-row">
+                            <label>Mardi</label>
+                            <input type="text" id="horaireMa_debut" placeholder="0800" maxlength="4">
+                            <input type="text" id="horaireMa_fin" placeholder="1730" maxlength="4">
+                            <select id="horaireMa_pause">
+                                <option value="0">0h</option>
+                                <option value="60" selected>1h</option>
+                                <option value="90">1h30</option>
+                            </select>
+                            <input type="number" id="horaireMa_heures" placeholder="7.75" step="0.25" readonly style="background: #f0f0f0;">
+                        </div>
+                        <div class="horaire-row">
+                            <label>Mercredi</label>
+                            <input type="text" id="horaireMe_debut" placeholder="0800" maxlength="4">
+                            <input type="text" id="horaireMe_fin" placeholder="1730" maxlength="4">
+                            <select id="horaireMe_pause">
+                                <option value="0">0h</option>
+                                <option value="60" selected>1h</option>
+                                <option value="90">1h30</option>
+                            </select>
+                            <input type="number" id="horaireMe_heures" placeholder="7.75" step="0.25" readonly style="background: #f0f0f0;">
+                        </div>
+                        <div class="horaire-row">
+                            <label>Jeudi</label>
+                            <input type="text" id="horaireJ_debut" placeholder="0800" maxlength="4">
+                            <input type="text" id="horaireJ_fin" placeholder="1730" maxlength="4">
+                            <select id="horaireJ_pause">
+                                <option value="0">0h</option>
+                                <option value="60" selected>1h</option>
+                                <option value="90">1h30</option>
+                            </select>
+                            <input type="number" id="horaireJ_heures" placeholder="7.75" step="0.25" readonly style="background: #f0f0f0;">
+                        </div>
+                        <div class="horaire-row">
+                            <label>Vendredi</label>
+                            <input type="text" id="horaireV_debut" placeholder="0800" maxlength="4">
+                            <input type="text" id="horaireV_fin" placeholder="1230" maxlength="4">
+                            <select id="horaireV_pause">
+                                <option value="0" selected>0h</option>
+                                <option value="60">1h</option>
+                                <option value="90">1h30</option>
+                            </select>
+                            <input type="number" id="horaireV_heures" placeholder="4" step="0.25" readonly style="background: #f0f0f0;">
+                        </div>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                        ℹ️ Les heures sont calculées automatiquement : (Fin - Début - Pause)
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" onclick="closeEmployeeModal()" style="padding: 12px 30px; background: #999; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                        Annuler
+                    </button>
+                    <button type="submit" class="btn-submit" style="font-size: 16px;">
+                        💾 Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        var currentUser = null;
+        var timeEntries = {};
+        var compteurInitial = {};
+        var selectedEmployee = null;
+        var patronCurrentWeek = null;
+        var chantiersHistory = [];
+        var chantierZones = {};
+        var employees = {
+            enzo: {
+                id: 'enzo',
+                nom: 'ANDRÉ',
+                prenom: 'Enzo',
+                adresse: '',
+                codePostal: '',
+                ville: '',
+                telephone: '',
+                email: '',
+                dateNaissance: '',
+                lieuNaissance: '',
+                numeroSecu: '',
+                dateEmbauche: '',
+                fonction: 'Ouvrier',
+                heuresHebdo: 35,
+                horairesSemaine: {
+                    lundi: { debut: '0800', fin: '1730', pause: 60, heures: 7.75 },
+                    mardi: { debut: '0800', fin: '1730', pause: 60, heures: 7.75 },
+                    mercredi: { debut: '0800', fin: '1730', pause: 60, heures: 7.75 },
+                    jeudi: { debut: '0800', fin: '1730', pause: 60, heures: 7.75 },
+                    vendredi: { debut: '0800', fin: '1230', pause: 0, heures: 4 }
+                },
+                zoneDefaut: 'Z1',
+                panierActif: true,
+                couleur: '#667eea',
+                actif: true,
+                dateArchivage: null
+            },
+            isabelle: {
+                id: 'isabelle',
+                nom: 'BISSON',
+                prenom: 'Isabelle',
+                adresse: '',
+                codePostal: '',
+                ville: '',
+                telephone: '',
+                email: '',
+                dateNaissance: '',
+                lieuNaissance: '',
+                numeroSecu: '',
+                dateEmbauche: '',
+                fonction: 'Secrétaire',
+                heuresHebdo: 22,
+                horairesSemaine: {
+                    lundi: { debut: '1330', fin: '1830', pause: 0, heures: 5 },
+                    mardi: { debut: '1330', fin: '1830', pause: 0, heures: 5 },
+                    mercredi: { debut: '1330', fin: '1730', pause: 0, heures: 4 },
+                    jeudi: { debut: '1330', fin: '1730', pause: 0, heures: 4 },
+                    vendredi: { debut: '1330', fin: '1730', pause: 0, heures: 4 }
+                },
+                zoneDefaut: 'Z0',
+                panierActif: false,
+                couleur: '#f093fb',
+                actif: true,
+                dateArchivage: null
+            },
+            stephane: {
+                id: 'stephane',
+                nom: '',
+                prenom: 'Stéphane',
+                adresse: '',
+                codePostal: '',
+                ville: '',
+                telephone: '',
+                email: '',
+                dateNaissance: '',
+                lieuNaissance: '',
+                numeroSecu: '',
+                dateEmbauche: '',
+                fonction: 'Ouvrier',
+                heuresHebdo: 35,
+                horairesSemaine: {
+                    lundi: { debut: '0800', fin: '1730', pause: 60, heures: 7.75 },
+                    mardi: { debut: '0800', fin: '1730', pause: 60, heures: 7.75 },
+                    mercredi: { debut: '0800', fin: '1730', pause: 60, heures: 7.75 },
+                    jeudi: { debut: '0800', fin: '1730', pause: 60, heures: 7.75 },
+                    vendredi: { debut: '0800', fin: '1230', pause: 0, heures: 4 }
+                },
+                zoneDefaut: 'Z2',
+                panierActif: true,
+                couleur: '#4facfe',
+                actif: true,
+                dateArchivage: null
+            }
+        };
+
+        function initializeData() {
+            for (var empId in employees) {
+                if (!timeEntries[empId]) {
+                    timeEntries[empId] = [];
+                }
+                if (compteurInitial[empId] === undefined) {
+                    if (empId === 'enzo') compteurInitial[empId] = -10;
+                    else if (empId === 'stephane') compteurInitial[empId] = -5;
+                    else compteurInitial[empId] = 0;
+                }
+            }
+        }
+
+        function loadData() {
+            var saved = localStorage.getItem('timesheet_v2');
+            if (saved) {
+                var data = JSON.parse(saved);
+                timeEntries = data.timeEntries || {};
+                compteurInitial = data.compteurInitial || {};
+                chantiersHistory = data.chantiersHistory || [];
+                chantierZones = data.chantierZones || {};
+                if (data.employees) {
+                    employees = data.employees;
+                }
+            }
+            initializeData();
+        }
+
+        function saveData() {
+            var data = {
+                timeEntries: timeEntries,
+                compteurInitial: compteurInitial,
+                chantiersHistory: chantiersHistory,
+                chantierZones: chantierZones,
+                employees: employees
+            };
+            localStorage.setItem('timesheet_v2', JSON.stringify(data));
+        }
+
+        function getWeek(d) {
+            var date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            var dayNum = date.getUTCDay() || 7;
+            date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+            var yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+            return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+        }
+        
+        function getWeekNumber(dateStr) {
+            var d = new Date(dateStr + 'T12:00:00');
+            var date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            var dayNum = date.getUTCDay() || 7;
+            date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+            var yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+            var weekNum = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+            return {
+                week: weekNum,
+                year: date.getUTCFullYear()
+            };
+        }
+
+        function formatH(h) {
+            var abs = Math.abs(h);
+            var hours = Math.floor(abs);
+            var mins = Math.round((abs - hours) * 60);
+            var sign = h < 0 ? '-' : (h > 0 ? '+' : '');
+            return sign + hours + 'h' + ('0' + mins).slice(-2);
+        }
+
+        function updateLoginButtons() {
+            var html = '';
+            for (var empId in employees) {
+                var emp = employees[empId];
+                if (emp.actif) {
+                    var style = 'background: ' + emp.couleur;
+                    html += '<button class="login-btn" style="' + style + '" onclick="doLogin(\'' + empId + '\')">';
+                    html += emp.nom + ' ' + emp.prenom + ' (' + emp.fonction + ')';
+                    html += '</button>';
+                }
+            }
+            document.getElementById('employeeLoginButtons').innerHTML = html;
+        }
+
+        function updatePdfEmployeeSelect() {
+            var select = document.getElementById('pdfEmployee');
+            select.innerHTML = '';
+            for (var empId in employees) {
+                var emp = employees[empId];
+                if (emp.actif) {
+                    var option = document.createElement('option');
+                    option.value = empId;
+                    option.textContent = emp.nom + ' ' + emp.prenom;
+                    select.appendChild(option);
+                }
+            }
+        }
+
+        function updateEmployeeTabs() {
+            var html = '';
+            for (var empId in employees) {
+                var emp = employees[empId];
+                if (emp.actif) {
+                    var tabClass = 'employee-tab tab-' + empId;
+                    var style = 'background: ' + emp.couleur;
+                    html += '<button class="' + tabClass + '" style="' + style + '" onclick="doShowTab(\'' + empId + '\')">';
+                    html += emp.prenom.toUpperCase();
+                    html += '</button>';
+                }
+            }
+            document.getElementById('dynamicEmployeeTabs').innerHTML = html;
+        }
+
+        function renderEmployeesList() {
+            var html = '';
+            for (var empId in employees) {
+                var emp = employees[empId];
+                var cardClass = emp.actif ? 'employee-card' : 'employee-card inactive';
+                var borderColor = emp.couleur;
+                
+                html += '<div class="' + cardClass + '" style="border-left-color: ' + borderColor + '">';
+                html += '<h4>' + emp.prenom + ' ' + emp.nom;
+                if (emp.actif) {
+                    html += '<span class="badge badge-active">Actif</span>';
+                } else {
+                    html += '<span class="badge badge-inactive">Archivé</span>';
+                }
+                html += '</h4>';
+                html += '<p><strong>Fonction:</strong> ' + emp.fonction + '</p>';
+                html += '<p><strong>Heures/semaine:</strong> ' + emp.heuresHebdo + 'h</p>';
+                if (emp.numeroSecu) {
+                    html += '<p><strong>N° Sécu:</strong> ' + emp.numeroSecu + '</p>';
+                }
+                if (emp.telephone) {
+                    html += '<p><strong>Tél:</strong> ' + emp.telephone + '</p>';
+                }
+                if (emp.email) {
+                    html += '<p><strong>Email:</strong> ' + emp.email + '</p>';
+                }
+                
+                html += '<div class="employee-card-actions">';
+                html += '<button class="btn-edit" onclick="editEmployee(\'' + empId + '\')">✏️ Modifier</button>';
+                if (emp.actif) {
+                    html += '<button class="btn-archive" onclick="archiveEmployee(\'' + empId + '\')">📦 Archiver</button>';
+                } else {
+                    html += '<button class="btn-edit" onclick="reactivateEmployee(\'' + empId + '\')">✅ Réactiver</button>';
+                }
+                html += '<button class="btn-delete" onclick="deleteEmployee(\'' + empId + '\')">🗑️ Supprimer</button>';
+                html += '</div>';
+                html += '</div>';
+            }
+            document.getElementById('employeesList').innerHTML = html;
+        }
+
+        function openEmployeeModal(empId) {
+            document.getElementById('employeeModal').style.display = 'block';
+            document.getElementById('employeeForm').reset();
+            
+            if (empId) {
+                document.getElementById('modalTitle').textContent = 'Modifier le salarié';
+                document.getElementById('editEmployeeId').value = empId;
+                var emp = employees[empId];
+                
+                document.getElementById('empNom').value = emp.nom || '';
+                document.getElementById('empPrenom').value = emp.prenom || '';
+                document.getElementById('empDateNaissance').value = emp.dateNaissance || '';
+                document.getElementById('empLieuNaissance').value = emp.lieuNaissance || '';
+                document.getElementById('empNumeroSecu').value = emp.numeroSecu || '';
+                document.getElementById('empTelephone').value = emp.telephone || '';
+                document.getElementById('empEmail').value = emp.email || '';
+                document.getElementById('empAdresse').value = emp.adresse || '';
+                document.getElementById('empCodePostal').value = emp.codePostal || '';
+                document.getElementById('empVille').value = emp.ville || '';
+                document.getElementById('empFonction').value = emp.fonction || '';
+                document.getElementById('empDateEmbauche').value = emp.dateEmbauche || '';
+                document.getElementById('empHeuresHebdo').value = emp.heuresHebdo || 35;
+                document.getElementById('empZoneDefaut').value = emp.zoneDefaut || 'Z1';
+                document.getElementById('empCouleur').value = emp.couleur || '#667eea';
+                document.getElementById('empPanierActif').checked = emp.panierActif !== false;
+                document.getElementById('empCompteurInitial').value = compteurInitial[empId] || 0;
+                
+                if (emp.horairesSemaine) {
+                    var jours = ['L', 'Ma', 'Me', 'J', 'V'];
+                    var joursMap = {L: 'lundi', Ma: 'mardi', Me: 'mercredi', J: 'jeudi', V: 'vendredi'};
+                    for (var i = 0; i < jours.length; i++) {
+                        var j = jours[i];
+                        var jourKey = joursMap[j];
+                        if (emp.horairesSemaine[jourKey]) {
+                            document.getElementById('horaire' + j + '_debut').value = emp.horairesSemaine[jourKey].debut || '';
+                            document.getElementById('horaire' + j + '_fin').value = emp.horairesSemaine[jourKey].fin || '';
+                            document.getElementById('horaire' + j + '_pause').value = emp.horairesSemaine[jourKey].pause || 0;
+                            document.getElementById('horaire' + j + '_heures').value = emp.horairesSemaine[jourKey].heures || 0;
+                        }
+                    }
+                }
+            } else {
+                document.getElementById('modalTitle').textContent = 'Ajouter un salarié';
+                document.getElementById('editEmployeeId').value = '';
+            }
+            
+            attachHoraireCalculators();
+        }
+
+        function attachHoraireCalculators() {
+            var jours = ['L', 'Ma', 'Me', 'J', 'V'];
+            for (var i = 0; i < jours.length; i++) {
+                var j = jours[i];
+                document.getElementById('horaire' + j + '_debut').addEventListener('input', function() { calculateHoraires(); });
+                document.getElementById('horaire' + j + '_fin').addEventListener('input', function() { calculateHoraires(); });
+                document.getElementById('horaire' + j + '_pause').addEventListener('change', function() { calculateHoraires(); });
+            }
+        }
+
+        function calculateHoraires() {
+            var jours = ['L', 'Ma', 'Me', 'J', 'V'];
+            for (var i = 0; i < jours.length; i++) {
+                var j = jours[i];
+                var debut = document.getElementById('horaire' + j + '_debut').value;
+                var fin = document.getElementById('horaire' + j + '_fin').value;
+                var pause = parseInt(document.getElementById('horaire' + j + '_pause').value) || 0;
+                
+                if (debut && fin && debut.length === 4 && fin.length === 4) {
+                    var hDebut = parseInt(debut.substr(0,2)) + parseInt(debut.substr(2,2))/60;
+                    var hFin = parseInt(fin.substr(0,2)) + parseInt(fin.substr(2,2))/60;
+                    var heures = hFin - hDebut - pause/60;
+                    document.getElementById('horaire' + j + '_heures').value = heures.toFixed(2);
+                }
+            }
+        }
+
+        function closeEmployeeModal() {
+            document.getElementById('employeeModal').style.display = 'none';
+        }
+
+        function saveEmployee(e) {
+            e.preventDefault();
+            
+            var editId = document.getElementById('editEmployeeId').value;
+            var empId;
+            
+            if (editId) {
+                empId = editId;
+            } else {
+                empId = document.getElementById('empPrenom').value.toLowerCase().replace(/[^a-z]/g, '') + '_' + Date.now();
+            }
+            
+            var jours = ['L', 'Ma', 'Me', 'J', 'V'];
+            var joursMap = {L: 'lundi', Ma: 'mardi', Me: 'mercredi', J: 'jeudi', V: 'vendredi'};
+            var horairesSemaine = {};
+            
+            for (var i = 0; i < jours.length; i++) {
+                var j = jours[i];
+                var jourKey = joursMap[j];
+                horairesSemaine[jourKey] = {
+                    debut: document.getElementById('horaire' + j + '_debut').value || '0800',
+                    fin: document.getElementById('horaire' + j + '_fin').value || '1730',
+                    pause: parseInt(document.getElementById('horaire' + j + '_pause').value) || 0,
+                    heures: parseFloat(document.getElementById('horaire' + j + '_heures').value) || 0
+                };
+            }
+            
+            employees[empId] = {
+                id: empId,
+                nom: document.getElementById('empNom').value,
+                prenom: document.getElementById('empPrenom').value,
+                dateNaissance: document.getElementById('empDateNaissance').value,
+                lieuNaissance: document.getElementById('empLieuNaissance').value,
+                numeroSecu: document.getElementById('empNumeroSecu').value,
+                telephone: document.getElementById('empTelephone').value,
+                email: document.getElementById('empEmail').value,
+                adresse: document.getElementById('empAdresse').value,
+                codePostal: document.getElementById('empCodePostal').value,
+                ville: document.getElementById('empVille').value,
+                fonction: document.getElementById('empFonction').value,
+                dateEmbauche: document.getElementById('empDateEmbauche').value,
+                heuresHebdo: parseFloat(document.getElementById('empHeuresHebdo').value),
+                zoneDefaut: document.getElementById('empZoneDefaut').value,
+                couleur: document.getElementById('empCouleur').value,
+                panierActif: document.getElementById('empPanierActif').checked,
+                horairesSemaine: horairesSemaine,
+                actif: employees[empId] ? employees[empId].actif : true,
+                dateArchivage: employees[empId] ? employees[empId].dateArchivage : null
+            };
+            
+            if (!editId) {
+                timeEntries[empId] = [];
+                compteurInitial[empId] = parseFloat(document.getElementById('empCompteurInitial').value) || 0;
+            } else {
+                compteurInitial[empId] = parseFloat(document.getElementById('empCompteurInitial').value) || 0;
+            }
+            
+            saveData();
+            closeEmployeeModal();
+            renderEmployeesList();
+            updateLoginButtons();
+            updatePdfEmployeeSelect();
+            updateEmployeeTabs();
+            
+            alert(editId ? '✅ Salarié modifié avec succès !' : '✅ Salarié ajouté avec succès !');
+            
+            return false;
+        }
+
+        function editEmployee(empId) {
+            openEmployeeModal(empId);
+        }
+
+        function archiveEmployee(empId) {
+            if (confirm('Archiver ' + employees[empId].prenom + ' ' + employees[empId].nom + ' ?\n\nLes données seront conservées mais le salarié n\'apparaîtra plus dans les interfaces.')) {
+                employees[empId].actif = false;
+                employees[empId].dateArchivage = new Date().toISOString();
+                saveData();
+                renderEmployeesList();
+                updateLoginButtons();
+                updatePdfEmployeeSelect();
+                updateEmployeeTabs();
+                alert('✅ Salarié archivé');
+            }
+        }
+
+        function reactivateEmployee(empId) {
+            if (confirm('Réactiver ' + employees[empId].prenom + ' ' + employees[empId].nom + ' ?')) {
+                employees[empId].actif = true;
+                employees[empId].dateArchivage = null;
+                saveData();
+                renderEmployeesList();
+                updateLoginButtons();
+                updatePdfEmployeeSelect();
+                updateEmployeeTabs();
+                alert('✅ Salarié réactivé');
+            }
+        }
+
+        function deleteEmployee(empId) {
+            var emp = employees[empId];
+            var hasData = timeEntries[empId] && timeEntries[empId].length > 0;
+            
+            var message = 'ATTENTION : Supprimer définitivement ' + emp.prenom + ' ' + emp.nom + ' ?\n\n';
+            if (hasData) {
+                message += '⚠️ Ce salarié a ' + timeEntries[empId].length + ' entrées enregistrées.\n';
+                message += 'Toutes les données seront DÉFINITIVEMENT supprimées !\n\n';
+            }
+            message += 'Cette action est IRRÉVERSIBLE !';
+            
+            if (confirm(message)) {
+                if (confirm('Dernière confirmation : êtes-vous sûr de vouloir supprimer ' + emp.prenom + ' ?')) {
+                    delete employees[empId];
+                    delete timeEntries[empId];
+                    delete compteurInitial[empId];
+                    saveData();
+                    renderEmployeesList();
+                    updateLoginButtons();
+                    updatePdfEmployeeSelect();
+                    updateEmployeeTabs();
+                    alert('✅ Salarié supprimé');
+                }
+            }
+        }
+
+        function doLogin(user) {
+            currentUser = user;
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainContent').classList.add('active');
+            
+            var emp = employees[user];
+            var displayName = emp ? emp.nom + ' ' + emp.prenom : 'Patron';
+            
+            document.getElementById('userName').textContent = displayName;
+            document.getElementById('currentWeek').textContent = 'S' + getWeek(new Date());
+            
+            if (user === 'patron') {
+                document.getElementById('employeeInterface').style.display = 'none';
+                document.getElementById('patronInterface').classList.add('active');
+                patronCurrentWeek = getWeek(new Date());
+                
+                setTimeout(function() {
+                    var btnModifier = document.getElementById('btnModifierCompteur');
+                    if (btnModifier) {
+                        btnModifier.addEventListener('click', doUpdateCompteur);
+                    }
+                }, 100);
+                
+                updatePdfEmployeeSelect();
+                updateEmployeeTabs();
+                doShowTab('gestion');
+            } else {
+                document.getElementById('employeeInterface').style.display = 'block';
+                document.getElementById('patronInterface').classList.remove('active');
+                document.getElementById('inputDate').valueAsDate = new Date();
+                
+                if (emp && emp.horairesSemaine && emp.horairesSemaine.lundi) {
+                    document.getElementById('inputDebut').value = emp.horairesSemaine.lundi.debut;
+                    document.getElementById('inputZone').value = emp.zoneDefaut;
+                }
+                
+                showEmployeeTimesheet();
+            }
+        }
+
+        function doLogout() {
+            currentUser = null;
+            document.getElementById('loginPage').style.display = 'block';
+            document.getElementById('mainContent').classList.remove('active');
+        }
+
+        function doAddEntry(e) {
+            e.preventDefault();
+            
+            var date = document.getElementById('inputDate').value;
+            var chantier = document.getElementById('inputChantier').value;
+            var zone = document.getElementById('inputZone').value;
+            var debut = document.getElementById('inputDebut').value;
+            var fin = document.getElementById('inputFin').value;
+            var pause = parseInt(document.getElementById('inputPause').value);
+            var decouche = document.getElementById('inputDecouche').checked ? 1 : 0;
+            
+            var entries = timeEntries[currentUser] || [];
+            var existingEntry = null;
+            for (var i = 0; i < entries.length; i++) {
+                if (entries[i].date === date) {
+                    existingEntry = entries[i];
+                    break;
+                }
+            }
+            var isRectif = document.getElementById('inputRectif').checked;
+            
+            if (existingEntry && !isRectif) {
+                alert('Une entree existe deja pour cette date. Cochez RECTIFICATION pour la modifier.');
+                return false;
+            }
+            
+            var hDebut = parseInt(debut.substr(0,2)) + parseInt(debut.substr(2,2))/60;
+            var hFin = parseInt(fin.substr(0,2)) + parseInt(fin.substr(2,2))/60;
+            var trajets = {Z0:0, Z1:0.25, Z2:0.5, Z3:0.75, Z4:1, Z5:1.25};
+            var trajet = trajets[zone];
+            var effectives = hFin - hDebut - pause/60 - trajet;
+            var dateObj = new Date(date + 'T12:00:00');
+            
+            var emp = employees[currentUser];
+            var payees;
+            
+            if (emp && emp.horairesSemaine) {
+                var joursMap = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+                var jourName = joursMap[dateObj.getDay()];
+                if (emp.horairesSemaine[jourName]) {
+                    payees = emp.horairesSemaine[jourName].heures;
+                } else {
+                    payees = emp.heuresHebdo / 5;
+                }
+            } else {
+                payees = dateObj.getDay() === 5 ? 4 : 7.75;
+            }
+            
+            var sup = effectives - payees;
+            var panier = (emp && !emp.panierActif) ? 0 : ((effectives >= 6 && zone !== 'Z0') ? 1 : 0);
+            
+            if (!chantiersHistory.includes(chantier)) {
+                chantiersHistory.push(chantier);
+            }
+            chantierZones[chantier] = zone;
+            
+            if (existingEntry && isRectif) {
+                var filtered = [];
+                for (var i = 0; i < timeEntries[currentUser].length; i++) {
+                    if (timeEntries[currentUser][i].date !== date) {
+                        filtered.push(timeEntries[currentUser][i]);
+                    }
+                }
+                timeEntries[currentUser] = filtered;
+            }
+            
+            timeEntries[currentUser].push({
+                id: Date.now(),
+                date: date, zone: zone, chantier: chantier, debut: debut, fin: fin, pause: pause, trajet: trajet,
+                effectives: effectives, payees: payees, sup: sup, panier: panier, decouche: decouche
+            });
+            
+            saveData();
+            showEmployeeTimesheet();
+            showMsg(isRectif ? 'Entrée modifiée et sauvegardée !' : 'Entrée sauvegardée !');
+            
+            document.getElementById('inputRectif').checked = false;
+            document.getElementById('rectifLabel').style.display = 'none';
+            document.getElementById('warningRectif').style.display = 'none';
+            
+            return false;
+        }
+
+        function checkDateExists() {
+            var date = document.getElementById('inputDate').value;
+            var entries = timeEntries[currentUser] || [];
+            var existingEntry = null;
+            
+            for (var i = 0; i < entries.length; i++) {
+                if (entries[i].date === date) {
+                    existingEntry = entries[i];
+                    break;
+                }
+            }
+            
+            if (existingEntry) {
+                document.getElementById('rectifLabel').style.display = 'flex';
+                document.getElementById('warningRectif').style.display = 'block';
+                
+                document.getElementById('inputChantier').value = existingEntry.chantier;
+                document.getElementById('inputZone').value = existingEntry.zone;
+                document.getElementById('inputDebut').value = existingEntry.debut;
+                document.getElementById('inputFin').value = existingEntry.fin;
+                document.getElementById('inputPause').value = existingEntry.pause;
+                document.getElementById('inputDecouche').checked = existingEntry.decouche === 1;
+            } else {
+                document.getElementById('rectifLabel').style.display = 'none';
+                document.getElementById('warningRectif').style.display = 'none';
+                document.getElementById('inputRectif').checked = false;
+            }
+        }
+
+        function showEmployeeTimesheet() {
+            var entries = timeEntries[currentUser] || [];
+            var tbody = document.getElementById('tbody');
+            
+            if (entries.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="15">Aucune entrée</td></tr>';
+                return;
+            }
+            
+            entries.sort(function(a,b) { return new Date(a.date) - new Date(b.date); });
+            
+            var compteur = compteurInitial[currentUser];
+            var html = '';
+            var jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+            
+            var emp = employees[currentUser];
+            var heuresHebdo = emp ? emp.heuresHebdo : 35;
+            var heuresMois = heuresHebdo * 4;
+            
+            var currentWeek = null;
+            var currentMonth = null;
+            var weekTotEff = 0, weekTotSup = 0, weekTotPanier = 0, weekTotDecouche = 0;
+            var monthTotEff = 0, monthTotSup = 0, monthTotPanier = 0, monthTotDecouche = 0;
+            var weekStartCompteur = compteur;
+            var monthStartCompteur = compteur;
+            
+            for (var i = 0; i < entries.length; i++) {
+                var e = entries[i];
+                var dateObj = new Date(e.date + 'T12:00:00');
+                var entryWeek = getWeek(dateObj);
+                var entryMonth = dateObj.getMonth() + '-' + dateObj.getFullYear();
+                
+                if (currentMonth !== null && currentMonth !== entryMonth) {
+                    var finalMonthCompteur = compteur;
+                    html += '<tr style="background:#E1F5FE !important;font-weight:700;border-top:3px solid #0277BD;border-bottom:3px solid #0277BD">';
+                    html += '<td colspan="8" style="text-align:right;color:#01579B">TOTAL MOIS</td>';
+                    html += '<td style="color:#0277BD">' + formatH(monthTotEff) + '</td>';
+                    html += '<td>' + heuresMois + 'h00</td>';
+                    html += '<td style="color:#0277BD">' + formatH(monthTotSup) + '</td>';
+                    html += '<td style="color:' + (finalMonthCompteur < 0 ? '#F44336' : '#4CAF50') + '">' + formatH(finalMonthCompteur) + '</td>';
+                    html += '<td>' + monthTotPanier + '</td>';
+                    html += '<td>' + monthTotDecouche + '</td>';
+                    html += '<td></td>';
+                    html += '</tr>';
+                    
+                    monthTotEff = 0;
+                    monthTotSup = 0;
+                    monthTotPanier = 0;
+                    monthTotDecouche = 0;
+                    monthStartCompteur = compteur;
+                }
+                
+                if (currentWeek !== null && currentWeek !== entryWeek) {
+                    var finalWeekCompteur = compteur;
+                    html += '<tr class="week-total">';
+                    html += '<td colspan="8" style="text-align:right">TOTAL SEMAINE ' + currentWeek + '</td>';
+                    html += '<td>' + formatH(weekTotEff) + '</td>';
+                    html += '<td>' + heuresHebdo + 'h00</td>';
+                    html += '<td>' + formatH(weekTotSup) + '</td>';
+                    html += '<td style="color:' + (finalWeekCompteur < 0 ? '#F44336' : '#4CAF50') + '">' + formatH(finalWeekCompteur) + '</td>';
+                    html += '<td>' + weekTotPanier + '</td>';
+                    html += '<td>' + weekTotDecouche + '</td>';
+                    html += '<td></td>';
+                    html += '</tr>';
+                    
+                    weekTotEff = 0;
+                    weekTotSup = 0;
+                    weekTotPanier = 0;
+                    weekTotDecouche = 0;
+                    weekStartCompteur = compteur;
+                }
+                
+                currentWeek = entryWeek;
+                currentMonth = entryMonth;
+                
+                compteur += e.sup;
+                weekTotEff += e.effectives;
+                weekTotSup += e.sup;
+                weekTotPanier += e.panier;
+                weekTotDecouche += e.decouche;
+                monthTotEff += e.effectives;
+                monthTotSup += e.sup;
+                monthTotPanier += e.panier;
+                monthTotDecouche += e.decouche;
+
+                var supColor = e.sup < 0 ? '#F44336' : '#00BCD4';
+                var cptColor = compteur < 0 ? '#F44336' : '#4CAF50';
+
+                html += '<tr>';
+                html += '<td>' + e.date + '</td>';
+                html += '<td>' + jours[dateObj.getDay()] + '</td>';
+                html += '<td><strong>' + e.zone + '</strong></td>';
+                html += '<td>' + e.chantier + '</td>';
+                html += '<td style="background:#E8F5E9;font-weight:bold">' + e.debut.substr(0,2) + 'h' + e.debut.substr(2,2) + '</td>';
+                html += '<td>' + (e.pause/60) + 'h</td>';
+                html += '<td style="background:#FFEBEE;font-weight:bold">' + e.fin.substr(0,2) + 'h' + e.fin.substr(2,2) + '</td>';
+                html += '<td style="color:#9C27B0">' + formatH(e.trajet) + '</td>';
+                html += '<td style="color:#2196F3;font-weight:bold">' + formatH(e.effectives) + '</td>';
+                html += '<td style="color:#FF9800">' + formatH(e.payees) + '</td>';
+                html += '<td style="color:' + supColor + ';font-weight:bold">' + formatH(e.sup) + '</td>';
+                html += '<td style="color:' + cptColor + ';font-weight:bold">' + formatH(compteur) + '</td>';
+                html += '<td>' + (e.panier ? '✔' : '-') + '</td>';
+                html += '<td>' + (e.decouche ? '✔' : '-') + '</td>';
+                html += '<td><button class="btn-action" onclick="doDeleteEntry(' + e.id + ')">X</button></td>';
+                html += '</tr>';
+            }
+            
+            if (currentWeek !== null) {
+                var finalWeekCompteur = compteur;
+                html += '<tr class="week-total">';
+                html += '<td colspan="8" style="text-align:right">TOTAL SEMAINE ' + currentWeek + '</td>';
+                html += '<td>' + formatH(weekTotEff) + '</td>';
+                html += '<td>' + heuresHebdo + 'h00</td>';
+                html += '<td>' + formatH(weekTotSup) + '</td>';
+                html += '<td style="color:' + (finalWeekCompteur < 0 ? '#F44336' : '#4CAF50') + '">' + formatH(finalWeekCompteur) + '</td>';
+                html += '<td>' + weekTotPanier + '</td>';
+                html += '<td>' + weekTotDecouche + '</td>';
+                html += '<td></td>';
+                html += '</tr>';
+            }
+            
+            if (currentMonth !== null) {
+                var finalMonthCompteur = compteur;
+                html += '<tr style="background:#E1F5FE !important;font-weight:700;border-top:3px solid #0277BD;border-bottom:3px solid #0277BD">';
+                html += '<td colspan="8" style="text-align:right;color:#01579B">TOTAL MOIS</td>';
+                html += '<td style="color:#0277BD">' + formatH(monthTotEff) + '</td>';
+                html += '<td>' + heuresMois + 'h00</td>';
+                html += '<td style="color:#0277BD">' + formatH(monthTotSup) + '</td>';
+                html += '<td style="color:' + (finalMonthCompteur < 0 ? '#F44336' : '#4CAF50') + '">' + formatH(finalMonthCompteur) + '</td>';
+                html += '<td>' + monthTotPanier + '</td>';
+                html += '<td>' + monthTotDecouche + '</td>';
+                html += '<td></td>';
+                html += '</tr>';
+            }
+            
+            tbody.innerHTML = html;
+            
+            // Mettre à jour la liste des semaines disponibles pour l'export
+            updateWeeksSelector();
+        }
+
+        function doDeleteEntry(id) {
+            if (confirm('Supprimer ?')) {
+                var filtered = [];
+                for (var i = 0; i < timeEntries[currentUser].length; i++) {
+                    if (timeEntries[currentUser][i].id !== id) {
+                        filtered.push(timeEntries[currentUser][i]);
+                    }
+                }
+                timeEntries[currentUser] = filtered;
+                saveData();
+                showEmployeeTimesheet();
+                updateWeeksSelector();  // Mettre à jour la liste des semaines
+            }
+        }
+
+        function doShowTab(tab) {
+            var tabs = document.querySelectorAll('.employee-tab');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            
+            document.getElementById('gestionSection').style.display = 'none';
+            document.getElementById('overviewSection').style.display = 'none';
+            document.getElementById('employeeSection').style.display = 'none';
+            
+            if (tab === 'gestion') {
+                document.getElementById('gestionSection').style.display = 'block';
+                document.querySelector('.tab-gestion').classList.add('active');
+                renderEmployeesList();
+            } else if (tab === 'overview') {
+                document.getElementById('overviewSection').style.display = 'block';
+                document.querySelector('.tab-overview').classList.add('active');
+                showOverview();
+            } else {
+                document.getElementById('employeeSection').style.display = 'block';
+                selectedEmployee = tab;
+                
+                var tabElement = document.querySelector('.tab-' + tab);
+                if (tabElement) {
+                    tabElement.classList.add('active');
+                }
+                
+                var emp = employees[tab];
+                var displayName = emp ? emp.nom + ' ' + emp.prenom : tab;
+                document.getElementById('selectedEmployeeName').textContent = displayName;
+                document.getElementById('compteurEmployeeName').textContent = displayName;
+                document.getElementById('patronInputDate').valueAsDate = new Date();
+                document.getElementById('compteurInitialInput').value = compteurInitial[tab];
+                
+                var btnModifier = document.getElementById('btnModifierCompteur');
+                if (btnModifier) {
+                    btnModifier.onclick = doUpdateCompteur;
+                }
+                
+                if (emp && emp.horairesSemaine && emp.horairesSemaine.lundi) {
+                    document.getElementById('patronInputDebut').value = emp.horairesSemaine.lundi.debut;
+                    document.getElementById('patronInputZone').value = emp.zoneDefaut;
+                }
+                
+                showEmployeeStats();
+                showPatronTimesheet();
+                updatePatronWeekDisplay();
+            }
+        }
+
+        function showOverview() {
+            var html = '';
+            
+            for (var empId in employees) {
+                var emp = employees[empId];
+                if (!emp.actif) continue;
+                
+                var entries = timeEntries[empId] || [];
+                var compteur = compteurInitial[empId];
+                var totalPaniers = 0;
+                var totalDecouche = 0;
+                var zonesCount = {Z0: 0, Z1: 0, Z2: 0, Z3: 0, Z4: 0, Z5: 0};
+                
+                for (var j = 0; j < entries.length; j++) {
+                    compteur += entries[j].sup;
+                    totalPaniers += entries[j].panier;
+                    totalDecouche += entries[j].decouche;
+                    if (zonesCount[entries[j].zone] !== undefined) {
+                        zonesCount[entries[j].zone]++;
+                    }
+                }
+                
+                var cptColor = compteur < 0 ? '#F44336' : '#4CAF50';
+                var displayName = emp.nom + ' ' + emp.prenom;
+                
+                html += '<div class="stat-card" style="background: linear-gradient(135deg, ' + emp.couleur + ' 0%, ' + emp.couleur + 'cc 100%)">';
+                html += '<h4>' + displayName + '</h4>';
+                html += '<div class="value" style="color:white">' + formatH(compteur) + '</div>';
+                html += '<div style="margin-top:15px;font-size:14px">';
+                html += '<div>📊 Entrées: ' + entries.length + '</div>';
+                html += '<div>🍱 Paniers: ' + totalPaniers + '</div>';
+                html += '<div>🏨 Découchés: ' + totalDecouche + '</div>';
+                html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.3)">';
+                html += '<div><strong>Zones:</strong></div>';
+                if (zonesCount.Z0 > 0) html += '<div>Z0: ' + zonesCount.Z0 + ' jours</div>';
+                if (zonesCount.Z1 > 0) html += '<div>Z1: ' + zonesCount.Z1 + ' jours</div>';
+                if (zonesCount.Z2 > 0) html += '<div>Z2: ' + zonesCount.Z2 + ' jours</div>';
+                if (zonesCount.Z3 > 0) html += '<div>Z3: ' + zonesCount.Z3 + ' jours</div>';
+                if (zonesCount.Z4 > 0) html += '<div>Z4: ' + zonesCount.Z4 + ' jours</div>';
+                if (zonesCount.Z5 > 0) html += '<div>Z5: ' + zonesCount.Z5 + ' jours</div>';
+                html += '</div>';
+                html += '</div></div>';
+            }
+            
+            document.getElementById('overviewStats').innerHTML = html;
+        }
+
+        function showEmployeeStats() {
+            var entries = timeEntries[selectedEmployee] || [];
+            var compteur = compteurInitial[selectedEmployee];
+            var totalPaniers = 0;
+            var totalDecouche = 0;
+            var totalSup = 0;
+            
+            for (var i = 0; i < entries.length; i++) {
+                compteur += entries[i].sup;
+                totalPaniers += entries[i].panier;
+                totalDecouche += entries[i].decouche;
+                totalSup += entries[i].sup;
+            }
+            
+            var cptColor = compteur < 0 ? '#F44336' : '#4CAF50';
+            var supColor = totalSup < 0 ? '#F44336' : '#00BCD4';
+            
+            var html = '<div class="stat-card">';
+            html += '<h4>Compteur</h4>';
+            html += '<div class="value" style="color:' + cptColor + '">' + formatH(compteur) + '</div>';
+            html += '</div>';
+            html += '<div class="stat-card">';
+            html += '<h4>H. Sup</h4>';
+            html += '<div class="value" style="color:' + supColor + '">' + formatH(totalSup) + '</div>';
+            html += '</div>';
+            html += '<div class="stat-card">';
+            html += '<h4>Paniers</h4>';
+            html += '<div class="value">' + totalPaniers + '</div>';
+            html += '</div>';
+            html += '<div class="stat-card">';
+            html += '<h4>Découchés</h4>';
+            html += '<div class="value">' + totalDecouche + '</div>';
+            html += '</div>';
+            
+            document.getElementById('employeeStats').innerHTML = html;
+        }
+
+        function showPatronTimesheet() {
+            var allEntries = timeEntries[selectedEmployee] || [];
+            var entries = [];
+            
+            for (var i = 0; i < allEntries.length; i++) {
+                var entryWeek = getWeek(new Date(allEntries[i].date + 'T12:00:00'));
+                if (entryWeek === patronCurrentWeek) {
+                    entries.push(allEntries[i]);
+                }
+            }
+            
+            var tbody = document.getElementById('patronTbody');
+            
+            if (entries.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="15">Aucune entrée cette semaine</td></tr>';
+                return;
+            }
+            
+            entries.sort(function(a,b) { return new Date(a.date) - new Date(b.date); });
+            
+            var compteur = compteurInitial[selectedEmployee];
+            allEntries.sort(function(a,b) { return new Date(a.date) - new Date(b.date); });
+            for (var i = 0; i < allEntries.length; i++) {
+                var entryWeek = getWeek(new Date(allEntries[i].date + 'T12:00:00'));
+                if (entryWeek < patronCurrentWeek) {
+                    compteur += allEntries[i].sup;
+                } else {
+                    break;
+                }
+            }
+            
+            var html = '';
+            var totEff = 0, totSup = 0, totPanier = 0, totDecouche = 0;
+            
+            var emp = employees[selectedEmployee];
+            var heuresHebdo = emp ? emp.heuresHebdo : 35;
+            
+            for (var i = 0; i < entries.length; i++) {
+                var e = entries[i];
+                var dateObj = new Date(e.date + 'T12:00:00');
+                var jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+                compteur += e.sup;
+                totEff += e.effectives;
+                totSup += e.sup;
+                totPanier += e.panier;
+                totDecouche += e.decouche;
+                
+                html += '<tr>';
+                html += '<td>' + e.date + '</td>';
+                html += '<td>' + jours[dateObj.getDay()] + '</td>';
+                html += '<td><strong>' + e.zone + '</strong></td>';
+                html += '<td>' + e.chantier + '</td>';
+                html += '<td style="background:#E8F5E9;font-weight:bold">' + e.debut.substr(0,2) + 'h' + e.debut.substr(2,2) + '</td>';
+                html += '<td>' + (e.pause/60) + 'h</td>';
+                html += '<td style="background:#FFEBEE;font-weight:bold">' + e.fin.substr(0,2) + 'h' + e.fin.substr(2,2) + '</td>';
+                html += '<td style="color:#9C27B0">' + formatH(e.trajet) + '</td>';
+                html += '<td style="color:#2196F3;font-weight:bold">' + formatH(e.effectives) + '</td>';
+                html += '<td style="color:#FF9800">' + formatH(e.payees) + '</td>';
+                html += '<td style="color:' + (e.sup < 0 ? '#F44336' : '#00BCD4') + ';font-weight:bold">' + formatH(e.sup) + '</td>';
+                html += '<td style="color:' + (compteur < 0 ? '#F44336' : '#4CAF50') + ';font-weight:bold">' + formatH(compteur) + '</td>';
+                html += '<td>' + (e.panier ? '✔' : '-') + '</td>';
+                html += '<td>' + (e.decouche ? '✔' : '-') + '</td>';
+                html += '<td><button class="btn-action" onclick="doDeletePatronEntry(' + e.id + ')">X</button></td>';
+                html += '</tr>';
+            }
+            
+            html += '<tr class="week-total">';
+            html += '<td colspan="8">TOTAL</td>';
+            html += '<td>' + formatH(totEff) + '</td>';
+            html += '<td>' + heuresHebdo + 'h00</td>';
+            html += '<td>' + formatH(totSup) + '</td>';
+            html += '<td style="color:' + (compteur < 0 ? '#F44336' : '#4CAF50') + '">' + formatH(compteur) + '</td>';
+            html += '<td>' + totPanier + '</td>';
+            html += '<td>' + totDecouche + '</td>';
+            html += '<td></td>';
+            html += '</tr>';
+            
+            tbody.innerHTML = html;
+        }
+
+        function updatePatronWeekDisplay() {
+            document.getElementById('patronWeekDisplay').textContent = 'Semaine ' + patronCurrentWeek + ' - 2025';
+        }
+
+        function doChangeWeek(direction) {
+            patronCurrentWeek += direction;
+            if (patronCurrentWeek < 1) patronCurrentWeek = 1;
+            if (patronCurrentWeek > 52) patronCurrentWeek = 52;
+            updatePatronWeekDisplay();
+            showPatronTimesheet();
+        }
+
+        function doAddPatronEntry(e) {
+            e.preventDefault();
+            
+            var date = document.getElementById('patronInputDate').value;
+            var chantier = document.getElementById('patronInputChantier').value;
+            var zone = document.getElementById('patronInputZone').value;
+            var debut = document.getElementById('patronInputDebut').value;
+            var fin = document.getElementById('patronInputFin').value;
+            var pause = parseInt(document.getElementById('patronInputPause').value);
+            var decouche = document.getElementById('patronInputDecouche').checked ? 1 : 0;
+            
+            var entries = timeEntries[selectedEmployee] || [];
+            var existingEntry = null;
+            for (var i = 0; i < entries.length; i++) {
+                if (entries[i].date === date) {
+                    existingEntry = entries[i];
+                    break;
+                }
+            }
+            var isRectif = document.getElementById('patronInputRectif').checked;
+            
+            if (existingEntry && !isRectif) {
+                alert('Une entree existe deja pour cette date. Cochez RECTIFICATION pour la modifier.');
+                return false;
+            }
+            
+            var hDebut = parseInt(debut.substr(0,2)) + parseInt(debut.substr(2,2))/60;
+            var hFin = parseInt(fin.substr(0,2)) + parseInt(fin.substr(2,2))/60;
+            var trajets = {Z0:0, Z1:0.25, Z2:0.5, Z3:0.75, Z4:1, Z5:1.25};
+            var trajet = trajets[zone];
+            var effectives = hFin - hDebut - pause/60 - trajet;
+            var dateObj = new Date(date + 'T12:00:00');
+            
+            var emp = employees[selectedEmployee];
+            var payees;
+            
+            if (emp && emp.horairesSemaine) {
+                var joursMap = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+                var jourName = joursMap[dateObj.getDay()];
+                if (emp.horairesSemaine[jourName]) {
+                    payees = emp.horairesSemaine[jourName].heures;
+                } else {
+                    payees = emp.heuresHebdo / 5;
+                }
+            } else {
+                payees = dateObj.getDay() === 5 ? 4 : 7.75;
+            }
+            
+            var sup = effectives - payees;
+            var panier = (emp && !emp.panierActif) ? 0 : ((effectives >= 6 && zone !== 'Z0') ? 1 : 0);
+            
+            if (!chantiersHistory.includes(chantier)) {
+                chantiersHistory.push(chantier);
+            }
+            chantierZones[chantier] = zone;
+            
+            if (existingEntry && isRectif) {
+                var filtered = [];
+                for (var i = 0; i < timeEntries[selectedEmployee].length; i++) {
+                    if (timeEntries[selectedEmployee][i].date !== date) {
+                        filtered.push(timeEntries[selectedEmployee][i]);
+                    }
+                }
+                timeEntries[selectedEmployee] = filtered;
+            }
+            
+            timeEntries[selectedEmployee].push({
+                id: Date.now(),
+                date: date, zone: zone, chantier: chantier, debut: debut, fin: fin, pause: pause, trajet: trajet,
+                effectives: effectives, payees: payees, sup: sup, panier: panier, decouche: decouche
+            });
+            
+            saveData();
+            showEmployeeStats();
+            showPatronTimesheet();
+            showPatronMsg(isRectif ? 'Entrée modifiée et sauvegardée !' : 'Entrée ajoutée et sauvegardée !');
+            
+            document.getElementById('patronInputRectif').checked = false;
+            document.getElementById('patronRectifLabel').style.display = 'none';
+            document.getElementById('patronWarningRectif').style.display = 'none';
+            
+            return false;
+        }
+
+        function checkPatronDateExists() {
+            var date = document.getElementById('patronInputDate').value;
+            var entries = timeEntries[selectedEmployee] || [];
+            var existingEntry = null;
+            
+            for (var i = 0; i < entries.length; i++) {
+                if (entries[i].date === date) {
+                    existingEntry = entries[i];
+                    break;
+                }
+            }
+            
+            if (existingEntry) {
+                document.getElementById('patronRectifLabel').style.display = 'flex';
+                document.getElementById('patronWarningRectif').style.display = 'block';
+                
+                document.getElementById('patronInputChantier').value = existingEntry.chantier;
+                document.getElementById('patronInputZone').value = existingEntry.zone;
+                document.getElementById('patronInputDebut').value = existingEntry.debut;
+                document.getElementById('patronInputFin').value = existingEntry.fin;
+                document.getElementById('patronInputPause').value = existingEntry.pause;
+                document.getElementById('patronInputDecouche').checked = existingEntry.decouche === 1;
+            } else {
+                document.getElementById('patronRectifLabel').style.display = 'none';
+                document.getElementById('patronWarningRectif').style.display = 'none';
+                document.getElementById('patronInputRectif').checked = false;
+            }
+        }
+
+        function doDeletePatronEntry(id) {
+            if (confirm('Supprimer cette entrée ?')) {
+                var filtered = [];
+                for (var i = 0; i < timeEntries[selectedEmployee].length; i++) {
+                    if (timeEntries[selectedEmployee][i].id !== id) {
+                        filtered.push(timeEntries[selectedEmployee][i]);
+                    }
+                }
+                timeEntries[selectedEmployee] = filtered;
+                saveData();
+                showEmployeeStats();
+                showPatronTimesheet();
+            }
+        }
+
+        function showMsg(text) {
+            var container = document.getElementById('messageContainer');
+            container.innerHTML = '<div class="message">' + text + '</div>';
+            setTimeout(function() { container.innerHTML = ''; }, 3000);
+        }
+
+        function showPatronMsg(text) {
+            var container = document.getElementById('patronMessageContainer');
+            container.innerHTML = '<div class="message">' + text + '</div>';
+            setTimeout(function() { container.innerHTML = ''; }, 3000);
+        }
+
+        function onChantierInput() {
+            var chantier = document.getElementById('inputChantier').value;
+            var datalist = document.getElementById('chantierList');
+            datalist.innerHTML = '';
+            
+            for (var i = 0; i < chantiersHistory.length; i++) {
+                var option = document.createElement('option');
+                option.value = chantiersHistory[i];
+                datalist.appendChild(option);
+            }
+            
+            if (chantierZones[chantier]) {
+                document.getElementById('inputZone').value = chantierZones[chantier];
+            }
+        }
+
+        function onPatronChantierInput() {
+            var chantier = document.getElementById('patronInputChantier').value;
+            var datalist = document.getElementById('patronChantierList');
+            datalist.innerHTML = '';
+            
+            for (var i = 0; i < chantiersHistory.length; i++) {
+                var option = document.createElement('option');
+                option.value = chantiersHistory[i];
+                datalist.appendChild(option);
+            }
+            
+            if (chantierZones[chantier]) {
+                document.getElementById('patronInputZone').value = chantierZones[chantier];
+            }
+        }
+
+        function doUpdateCompteur() {
+            var inputElement = document.getElementById('compteurInitialInput');
+            var newValue = parseFloat(inputElement.value);
+            
+            if (isNaN(newValue)) {
+                alert('Veuillez entrer un nombre valide');
+                return;
+            }
+            
+            var oldValue = compteurInitial[selectedEmployee];
+            
+            compteurInitial[selectedEmployee] = newValue;
+            saveData();
+            showEmployeeStats();
+            showPatronTimesheet();
+            showOverview();
+            showPatronMsg('✅ Compteur initial modifié : ' + formatH(oldValue) + ' → ' + formatH(newValue));
+        }
+        
+        window.doUpdateCompteur = doUpdateCompteur;
+        
+        function updateMonthIndicator() {
+            if (currentUser && currentUser !== 'patron') {
+                var now = new Date();
+                var monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+                var currentMonth = now.getMonth();
+                var currentYear = now.getFullYear();
+                
+                document.getElementById('currentMonthName').textContent = monthNames[currentMonth] + ' ' + currentYear;
+                
+                var entries = timeEntries[currentUser] || [];
+                var daysThisMonth = 0;
+                for (var i = 0; i < entries.length; i++) {
+                    var entryDate = new Date(entries[i].date + 'T12:00:00');
+                    if (entryDate.getMonth() === currentMonth && entryDate.getFullYear() === currentYear) {
+                        daysThisMonth++;
+                    }
+                }
+                
+                document.getElementById('daysCount').textContent = daysThisMonth;
+                
+                var dayOfMonth = now.getDate();
+                var btnNewMonth = document.getElementById('btnNewMonth');
+                var newMonthInfo = document.getElementById('newMonthInfo');
+                
+                if (dayOfMonth >= 25) {
+                    btnNewMonth.style.display = 'block';
+                    newMonthInfo.style.display = 'none';
+                } else {
+                    btnNewMonth.style.display = 'none';
+                    newMonthInfo.style.display = 'block';
+                }
+            }
+        }
+
+        function doExportWeek() {
+            if (!currentUser || currentUser === 'patron') {
+                alert('Cette fonction est réservée aux salariés');
+                return;
+            }
+            
+            var now = new Date();
+            var currentWeek = getWeek(now);
+            var entries = timeEntries[currentUser] || [];
+            
+            var weekEntries = [];
+            for (var i = 0; i < entries.length; i++) {
+                var entryDate = new Date(entries[i].date + 'T12:00:00');
+                var entryWeek = getWeek(entryDate);
+                if (entryWeek === currentWeek) {
+                    weekEntries.push(entries[i]);
+                }
+            }
+            
+            if (weekEntries.length === 0) {
+                alert('Aucune donnée pour cette semaine');
+                return;
+            }
+            
+            var exportData = {
+                salarie: currentUser,
+                semaine: currentWeek,
+                annee: now.getFullYear(),
+                dateExport: now.toISOString(),
+                compteurInitial: compteurInitial[currentUser],
+                entries: weekEntries
+            };
+            
+            var dataStr = JSON.stringify(exportData, null, 2);
+            
+            // Nom du fichier
+            var fileName = currentUser + '_semaine_' + currentWeek + '_' + now.getFullYear() + '.json';
+            
+            // Télécharger le fichier
+            var dataBlob = new Blob([dataStr], {type: 'application/json'});
+            var url = URL.createObjectURL(dataBlob);
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            // Stocker le contenu pour la copie et afficher le nom du fichier
+            document.getElementById('exportContent').value = dataStr;
+            document.getElementById('exportFileName').textContent = fileName;
+            document.getElementById('exportDisplay').style.display = 'block';
+            
+            // Scroll vers la zone d'affichage
+            document.getElementById('exportDisplay').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            alert('✅ Semaine ' + currentWeek + ' exportée !\n\n' + weekEntries.length + ' jours enregistrés.\n\n📥 Fichier téléchargé\n📋 Cliquez sur le nom du fichier pour copier son contenu');
+        }
+
+        function doNewMonth() {
+            if (!currentUser || currentUser === 'patron') {
+                alert('Cette fonction est réservée aux salariés');
+                return;
+            }
+            
+            var now = new Date();
+            var monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+            var currentMonth = now.getMonth();
+            var currentYear = now.getFullYear();
+            
+            var entries = timeEntries[currentUser] || [];
+            var daysThisMonth = 0;
+            var monthEntries = [];
+            for (var i = 0; i < entries.length; i++) {
+                var entryDate = new Date(entries[i].date + 'T12:00:00');
+                if (entryDate.getMonth() === currentMonth && entryDate.getFullYear() === currentYear) {
+                    daysThisMonth++;
+                    monthEntries.push(entries[i]);
+                }
+            }
+            
+            if (daysThisMonth === 0) {
+                alert('Aucune donnée pour ce mois');
+                return;
+            }
+            
+            if (!confirm('⚠️ CHANGEMENT DE MOIS\n\nVous allez effacer toutes les données de ' + monthNames[currentMonth] + ' ' + currentYear + '\n\n📊 ' + daysThisMonth + ' jours enregistrés\n\nVoulez-vous continuer ?')) {
+                return;
+            }
+            
+            if (!confirm('⚠️ CONFIRMATION IMPORTANTE\n\nAssurez-vous d\'avoir exporté TOUTES les semaines du mois !\n\nAvez-vous bien envoyé tous les exports au patron ?')) {
+                return;
+            }
+            
+            if (!confirm('⚠️ DERNIÈRE CONFIRMATION\n\nCette action est IRRÉVERSIBLE.\n\n' + daysThisMonth + ' jours seront définitivement effacés.\n\nConfirmer l\'effacement ?')) {
+                return;
+            }
+            
+            var newEntries = [];
+            for (var i = 0; i < entries.length; i++) {
+                var entryDate = new Date(entries[i].date + 'T12:00:00');
+                if (entryDate.getMonth() !== currentMonth || entryDate.getFullYear() !== currentYear) {
+                    newEntries.push(entries[i]);
+                }
+            }
+            
+            timeEntries[currentUser] = newEntries;
+            saveData();
+            showEmployeeTimesheet();
+            updateMonthIndicator();
+            
+            var nextMonth = (currentMonth + 1) % 12;
+            var nextYear = nextMonth === 0 ? currentYear + 1 : currentYear;
+            
+            alert('✅ Données de ' + monthNames[currentMonth] + ' ' + currentYear + ' effacées !\n\n' + daysThisMonth + ' jours supprimés.\n\nPrêt pour ' + monthNames[nextMonth] + ' ' + nextYear + ' !');
+        }
+
+        function doImportData() {
+            if (currentUser !== 'patron') {
+                alert('Cette fonction est réservée au patron');
+                return;
+            }
+            
+            var fileInput = document.getElementById('importFile');
+            var file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Veuillez sélectionner un fichier JSON');
+                return;
+            }
+            
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                processImportData(e.target.result);
+                fileInput.value = '';
+            };
+            
+            reader.onerror = function() {
+                alert('Erreur lors de la lecture du fichier');
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function doImportFromText() {
+            if (currentUser !== 'patron') {
+                alert('Cette fonction est réservée au patron');
+                return;
+            }
+            
+            var textarea = document.getElementById('importTextarea');
+            var jsonText = textarea.value.trim();
+            
+            if (!jsonText) {
+                alert('Veuillez coller du contenu JSON dans la zone de texte');
+                return;
+            }
+            
+            // Nettoyer le texte si c'est un message WhatsApp avec des balises markdown
+            jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            
+            processImportData(jsonText);
+            textarea.value = '';
+        }
+
+        function clearImportText() {
+            document.getElementById('importTextarea').value = '';
+        }
+
+        function processImportData(jsonString) {
+            try {
+                var importData = JSON.parse(jsonString);
+                
+                if (!importData.salarie || !importData.entries) {
+                    alert('Fichier invalide : structure incorrecte');
+                    return;
+                }
+                
+                var salarie = importData.salarie;
+                var importedEntries = importData.entries;
+                
+                if (!timeEntries[salarie]) {
+                    timeEntries[salarie] = [];
+                }
+                
+                var addedCount = 0;
+                var updatedCount = 0;
+                
+                for (var i = 0; i < importedEntries.length; i++) {
+                    var importEntry = importedEntries[i];
+                    
+                    var existingIndex = -1;
+                    for (var j = 0; j < timeEntries[salarie].length; j++) {
+                        if (timeEntries[salarie][j].date === importEntry.date) {
+                            existingIndex = j;
+                            break;
+                        }
+                    }
+                    
+                    if (existingIndex >= 0) {
+                        timeEntries[salarie][existingIndex] = importEntry;
+                        updatedCount++;
+                    } else {
+                        timeEntries[salarie].push(importEntry);
+                        addedCount++;
+                    }
+                }
+                
+                if (importData.compteurInitial !== undefined) {
+                    compteurInitial[salarie] = importData.compteurInitial;
+                }
+                
+                saveData();
+                
+                if (selectedEmployee === salarie) {
+                    showEmployeeStats();
+                    showPatronTimesheet();
+                }
+                
+                showOverview();
+                
+                var emp = employees[salarie];
+                var displayName = emp ? emp.nom + ' ' + emp.prenom : salarie;
+                var message = '✅ Import réussi !\n\n';
+                message += '👤 Salarié : ' + displayName + '\n';
+                if (importData.periodeExport) {
+                    message += '📅 Période : ' + importData.periodeExport + '\n';
+                }
+                if (importData.semaines) {
+                    message += '📋 Semaines : ' + importData.semaines + '\n';
+                }
+                message += '\n📊 Résultat :\n';
+                message += '✅ ' + addedCount + ' nouvelles entrées ajoutées\n';
+                message += '🔄 ' + updatedCount + ' entrées mises à jour\n';
+                message += '📈 Total : ' + (addedCount + updatedCount) + ' jours importés';
+                
+                alert(message);
+                
+            } catch (error) {
+                alert('❌ Erreur lors de l\'import : ' + error.message + '\n\nVérifiez que le JSON est valide.');
+                console.error(error);
+            }
+        }
+
+        var originalDoLogin = doLogin;
+        doLogin = function(user) {
+            originalDoLogin(user);
+            setTimeout(updateMonthIndicator, 100);
+        };
+
+        function generateWeekPDF() {
+            alert('Fonction PDF en cours de développement...');
+        }
+
+        function generateMonthPDF() {
+            alert('Fonction PDF en cours de développement...');
+        }
+
+        loadData();
+        updateLoginButtons();
+        
+        // ========================================
+        // NOUVELLES FONCTIONS: Export de semaines multiples
+        // ========================================
+        
+        var selectedWeeks = [];
+        
+        // Fonction appelée après chaque ajout/suppression/login pour régénérer la liste
+        function updateWeeksSelector() {
+            if (currentUser === 'patron') return; // Pas pour le patron
+            
+            var selector = document.getElementById('weeksSelector');
+            if (!selector) return;
+            
+            var entries = timeEntries[currentUser] || [];
+            if (entries.length === 0) {
+                selector.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Aucune donnée disponible. Ajoutez des heures pour pouvoir les exporter.</p>';
+                updateSelectionCount();
+                return;
+            }
+            
+            // Grouper les entrées par semaine
+            var weekGroups = {};
+            for (var i = 0; i < entries.length; i++) {
+                var entry = entries[i];
+                var weekNum = getWeekNumber(entry.date);
+                var weekKey = weekNum.year + '-W' + (weekNum.week < 10 ? '0' : '') + weekNum.week;
+                
+                if (!weekGroups[weekKey]) {
+                    weekGroups[weekKey] = {
+                        weekKey: weekKey,
+                        weekNum: weekNum,
+                        entries: [],
+                        dateRange: ''
+                    };
+                }
+                weekGroups[weekKey].entries.push(entry);
+            }
+            
+            // Trier les semaines (plus récentes en premier)
+            var sortedWeeks = [];
+            for (var key in weekGroups) {
+                sortedWeeks.push(weekGroups[key]);
+            }
+            sortedWeeks.sort(function(a, b) {
+                if (a.weekNum.year !== b.weekNum.year) {
+                    return b.weekNum.year - a.weekNum.year;
+                }
+                return b.weekNum.week - a.weekNum.week;
+            });
+            
+            // Générer le HTML
+            var html = '';
+            for (var i = 0; i < sortedWeeks.length; i++) {
+                var week = sortedWeeks[i];
+                var firstDate = week.entries[0].date;
+                var lastDate = week.entries[week.entries.length - 1].date;
+                
+                // Calculer le total d'heures de la semaine
+                var totalHours = 0;
+                for (var j = 0; j < week.entries.length; j++) {
+                    totalHours += week.entries[j].heurePaye || 0;
+                }
+                
+                var isSelected = selectedWeeks.indexOf(week.weekKey) >= 0;
+                
+                html += '<div class="week-checkbox-item' + (isSelected ? ' selected' : '') + '" onclick="toggleWeekSelection(\'' + week.weekKey + '\')">';
+                html += '<input type="checkbox" ' + (isSelected ? 'checked' : '') + ' onclick="event.stopPropagation(); toggleWeekSelection(\'' + week.weekKey + '\')">';
+                html += '<div class="week-info">';
+                html += '<div class="week-label">Semaine ' + week.weekNum.week + ' - ' + week.weekNum.year + '</div>';
+                html += '<div class="week-details">';
+                html += week.entries.length + ' jour(s) • ' + totalHours.toFixed(2) + 'h • Du ' + formatDateFr(firstDate) + ' au ' + formatDateFr(lastDate);
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            selector.innerHTML = html;
+            updateSelectionCount();
+        }
+        
+        function toggleWeekSelection(weekKey) {
+            var index = selectedWeeks.indexOf(weekKey);
+            if (index >= 0) {
+                selectedWeeks.splice(index, 1);
+            } else {
+                selectedWeeks.push(weekKey);
+            }
+            updateWeeksSelector();
+        }
+        
+        function toggleSelectAllWeeks() {
+            var entries = timeEntries[currentUser] || [];
+            if (entries.length === 0) return;
+            
+            // Si tout est sélectionné, tout désélectionner, sinon tout sélectionner
+            if (selectedWeeks.length > 0) {
+                selectedWeeks = [];
+            } else {
+                // Récupérer toutes les semaines disponibles
+                var weekKeys = {};
+                for (var i = 0; i < entries.length; i++) {
+                    var weekNum = getWeekNumber(entries[i].date);
+                    var weekKey = weekNum.year + '-W' + (weekNum.week < 10 ? '0' : '') + weekNum.week;
+                    weekKeys[weekKey] = true;
+                }
+                selectedWeeks = Object.keys(weekKeys);
+            }
+            updateWeeksSelector();
+        }
+        
+        function updateSelectionCount() {
+            var countSpan = document.getElementById('selectionCount');
+            var btnExport = document.getElementById('btnExportWhatsApp');
+            
+            if (!countSpan || !btnExport) return;
+            
+            var count = selectedWeeks.length;
+            if (count === 0) {
+                countSpan.textContent = 'Aucune semaine sélectionnée';
+                countSpan.style.color = '#666';
+                btnExport.disabled = true;
+            } else {
+                countSpan.textContent = count + ' semaine(s) sélectionnée(s)';
+                countSpan.style.color = '#4CAF50';
+                countSpan.style.fontWeight = 'bold';
+                btnExport.disabled = false;
+            }
+        }
+        
+        function exportSelectedWeeksToWhatsApp() {
+            if (selectedWeeks.length === 0) {
+                alert('Veuillez sélectionner au moins une semaine');
+                return;
+            }
+            
+            var entries = timeEntries[currentUser] || [];
+            var selectedEntries = [];
+            
+            // Filtrer les entrées des semaines sélectionnées
+            for (var i = 0; i < entries.length; i++) {
+                var entry = entries[i];
+                var weekNum = getWeekNumber(entry.date);
+                var weekKey = weekNum.year + '-W' + (weekNum.week < 10 ? '0' : '') + weekNum.week;
+                
+                if (selectedWeeks.indexOf(weekKey) >= 0) {
+                    selectedEntries.push(entry);
+                }
+            }
+            
+            // Trier les entrées par date
+            selectedEntries.sort(function(a, b) {
+                return a.date.localeCompare(b.date);
+            });
+            
+            // Créer l'objet d'export
+            var exportData = {
+                salarie: currentUser,
+                nom: employees[currentUser].nom,
+                prenom: employees[currentUser].prenom,
+                periodeExport: selectedWeeks.length + ' semaine(s)',
+                semaines: selectedWeeks.sort().join(', '),
+                dateExport: new Date().toISOString(),
+                entries: selectedEntries,
+                compteurInitial: compteurInitial[currentUser] || 0
+            };
+            
+            var jsonStr = JSON.stringify(exportData, null, 2);
+            
+            // Préparer le message WhatsApp
+            var message = '📊 *Relevé d\'heures*\n\n';
+            message += '👤 ' + exportData.nom + ' ' + exportData.prenom + '\n';
+            message += '📅 ' + selectedWeeks.length + ' semaine(s) sélectionnée(s)\n';
+            message += '📋 ' + selectedEntries.length + ' jour(s) enregistré(s)\n\n';
+            message += '```json\n' + jsonStr + '\n```';
+            
+            var encodedMessage = encodeURIComponent(message);
+            var whatsappURL = 'https://wa.me/?text=' + encodedMessage;
+            
+            // Sur mobile, utiliser l'URL scheme
+            if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                whatsappURL = 'whatsapp://send?text=' + encodedMessage;
+            }
+            
+            // Ouvrir WhatsApp
+            window.open(whatsappURL, '_blank');
+            
+            // Feedback
+            var btn = document.getElementById('btnExportWhatsApp');
+            var originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span style="font-size: 24px;">✅</span> Envoyé !';
+            btn.style.background = '#20ba5a';
+            
+            setTimeout(function() {
+                btn.innerHTML = originalHTML;
+                btn.style.background = '#25D366';
+            }, 3000);
+        }
+        
+        function formatDateFr(dateStr) {
+            var parts = dateStr.split('-');
+            return parts[2] + '/' + parts[1] + '/' + parts[0];
+        }
+        
+        // Pas besoin de hooks, on appellera updateWeeksSelector manuellement
+        
+        // ========================================
+        // FIN DES NOUVELLES FONCTIONS
+        // ========================================
+        
+        // Fonction mot de passe Patron
+function requestPatronPassword() {
+  const enteredPassword = prompt("Veuillez entrer le mot de passe Patron :");
+  const correctPassword = patronPassword;
+  // Change ce mot de passe ici si tu veux
+  if (enteredPassword === correctPassword) {
+    doLogin("patron");
+  } else {
+    alert("Mot de passe incorrect. Accès refusé.");
+  }
+}
+var patronPassword = localStorage.getItem("patronPassword") || "2307";
+
+
+function requestPatronPassword() {
+  const enteredPassword = prompt("Veuillez entrer le mot de passe Patron :");
+  if (enteredPassword === patronPassword) {
+    doLogin("patron");
+  } else {
+    alert("Mot de passe incorrect. Accès refusé.");
+  }
+}
+
+function updatePatronPassword() {
+  const newPasswordInput = document.getElementById("newPatronPassword");
+  const newPassword = newPasswordInput.value.trim();
+  const message = document.getElementById("passwordMessage");
+
+  if (newPassword.length < 4) {
+    message.style.color = "red";
+    message.textContent = "Le mot de passe doit contenir au moins 4 caractères.";
+    return;
+  }
+
+  patronPassword = newPassword;
+  localStorage.setItem("patronPassword", newPassword);
+
+  message.style.color = "green";
+  message.textContent = "Mot de passe modifié avec succès!";
+  newPasswordInput.value = "";
+}
+
+// Fonction pour copier le contenu JSON dans le presse-papier
+function copyExportData() {
+  var exportContent = document.getElementById('exportContent');
+  var btn = document.getElementById('exportCopyBtn');
+  
+  // Utiliser l'API Clipboard moderne si disponible
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(exportContent.value).then(function() {
+      // Feedback visuel sur le bouton
+      var originalHTML = btn.innerHTML;
+      btn.innerHTML = '✅ Copié !';
+      btn.style.background = '#4CAF50';
+      
+      setTimeout(function() {
+        btn.innerHTML = originalHTML;
+        btn.style.background = '#2196F3';
+      }, 2000);
+    }).catch(function() {
+      alert('❌ Erreur lors de la copie. Veuillez réessayer.');
+    });
+  } else {
+    // Fallback pour navigateurs plus anciens
+    exportContent.style.position = 'static';
+    exportContent.style.left = '0';
+    exportContent.select();
+    exportContent.setSelectionRange(0, 99999);
+    
+    try {
+      document.execCommand('copy');
+      exportContent.style.position = 'absolute';
+      exportContent.style.left = '-9999px';
+      
+      var originalHTML = btn.innerHTML;
+      btn.innerHTML = '✅ Copié !';
+      btn.style.background = '#4CAF50';
+      
+      setTimeout(function() {
+        btn.innerHTML = originalHTML;
+        btn.style.background = '#2196F3';
+      }, 2000);
+    } catch (err) {
+      exportContent.style.position = 'absolute';
+      exportContent.style.left = '-9999px';
+      alert('❌ Erreur lors de la copie. Veuillez réessayer.');
+    }
+  }
+}
+
+// Fonction pour partager via WhatsApp
+function shareToWhatsApp() {
+  var exportContent = document.getElementById('exportContent').value;
+  var fileName = document.getElementById('exportFileName').textContent;
+  
+  // Message d'introduction
+  var message = '📊 *Relevé d\'heures - ' + fileName + '*\n\n```\n' + exportContent + '\n```';
+  
+  // Encoder le message pour URL
+  var encodedMessage = encodeURIComponent(message);
+  
+  // URL WhatsApp (fonctionne sur mobile et desktop)
+  var whatsappURL = 'https://wa.me/?text=' + encodedMessage;
+  
+  // Sur mobile, utiliser l'URL scheme WhatsApp
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    whatsappURL = 'whatsapp://send?text=' + encodedMessage;
+  }
+  
+  // Ouvrir WhatsApp
+  window.open(whatsappURL, '_blank');
+  
+  // Feedback visuel
+  var btn = document.getElementById('exportWhatsAppBtn');
+  var originalHTML = btn.innerHTML;
+  btn.innerHTML = '✅ Envoyé !';
+  
+  setTimeout(function() {
+    btn.innerHTML = originalHTML;
+  }, 2000);
+}
+
+// Fonction pour masquer la zone d'affichage de l'export
+function hideExportDisplay() {
+  document.getElementById('exportDisplay').style.display = 'none';
+}
+
+
+    </script>
+</body>
+</html>
