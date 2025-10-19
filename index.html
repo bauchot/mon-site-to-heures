@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Releve Heures v2.0</title>
-    <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>    
+    <title>Releve Heures v2.2 - QR Code</title>
+    <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <!-- Bibliothèques QR Code -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -345,6 +348,142 @@
             color: #667eea;
             font-size: 16px;
         }
+        
+        /* ========== STYLES QR CODE ========== */
+        .qr-section {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 3px solid #4CAF50;
+            text-align: center;
+        }
+        .qr-section h3 {
+            color: #2e7d32;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .qr-display {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        #qrcodeCanvas {
+            max-width: 100%;
+            height: auto;
+        }
+        .qr-instructions {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+            border-left: 5px solid #4CAF50;
+        }
+        .qr-instructions h4 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+        .qr-instructions ol {
+            margin-left: 20px;
+            color: #555;
+        }
+        .qr-instructions li {
+            margin: 8px 0;
+            font-size: 15px;
+        }
+        .btn-generate-qr {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+        .btn-generate-qr:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+        }
+        .btn-scan-qr {
+            padding: 20px 40px;
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 20px auto;
+            display: block;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(255, 152, 0, 0.4);
+            width: 100%;
+            max-width: 400px;
+        }
+        .btn-scan-qr:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 152, 0, 0.6);
+        }
+        .scanner-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px auto;
+            max-width: 600px;
+            display: none;
+        }
+        .scanner-container.active {
+            display: block;
+        }
+        #qr-reader {
+            border: 3px solid #FF9800;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .scanner-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .btn-close-scanner {
+            padding: 12px 30px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .scan-success {
+            background: #4CAF50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .scan-success.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* ========== FIN STYLES QR CODE ========== */
         
         .patron-dashboard {
             display: none;
@@ -730,6 +869,36 @@
             </div>
 
             <div id="employeeInterface">
+                <!-- Section Scanner QR Code pour les salariés -->
+                <div class="qr-section" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-color: #FF9800;">
+                    <h3 style="color: #E65100;">📷 Scanner une mise à jour</h3>
+                    <p style="color: #E65100; font-size: 15px; margin-bottom: 15px;">
+                        Scannez le QR Code du Patron pour mettre à jour votre liste d'employés
+                    </p>
+                    
+                    <button class="btn-scan-qr" onclick="openQRScanner()">
+                        📷 Scanner le QR Code
+                    </button>
+                    
+                    <!-- Message de succès -->
+                    <div id="scanSuccess" class="scan-success">
+                        ✅ Mise à jour réussie ! La liste des employés a été synchronisée.
+                    </div>
+                    
+                    <!-- Container du scanner -->
+                    <div id="scannerContainer" class="scanner-container">
+                        <h4 style="color: #FF9800; margin-bottom: 15px; text-align: center;">
+                            📸 Pointez votre caméra vers le QR Code
+                        </h4>
+                        <div id="qr-reader" style="width: 100%;"></div>
+                        <div class="scanner-controls">
+                            <button class="btn-close-scanner" onclick="closeQRScanner()">
+                                ✕ Fermer le scanner
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
                 <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 3px solid #667eea;">
                     <h3 style="color: #667eea; margin-bottom: 15px;">📊 Gestion des données</h3>
                     
@@ -1031,6 +1200,89 @@
                 </div>
 
                 <div id="gestionSection" style="display: none;">
+                    <!-- Section QR Code pour synchronisation EMPLOYÉS -->
+                    <div class="qr-section">
+                        <h3>📱 Synchronisation Employés (QR Code)</h3>
+                        <p style="color: #2e7d32; font-size: 16px; margin-bottom: 20px;">
+                            ✅ Synchronise uniquement la liste des employés<br>
+                            💡 Rapide et léger - Idéal pour ajouter un nouvel employé
+                        </p>
+                        
+                        <button class="btn-generate-qr" onclick="generateEmployeesQR()">
+                            👥 Générer QR Code (Employés uniquement)
+                        </button>
+                        
+                        <div id="qrDisplay" style="display: none; margin-top: 20px;">
+                            <div id="qrcodeCanvas" class="qr-display"></div>
+                            
+                            <div class="qr-instructions">
+                                <h4>📋 Instructions pour les salariés :</h4>
+                                <ol>
+                                    <li>Ouvrir l'application sur leur téléphone</li>
+                                    <li>Cliquer sur le bouton "📷 Scanner QR Code"</li>
+                                    <li>Pointer la caméra vers ce QR Code</li>
+                                    <li>✅ La liste des employés se met à jour automatiquement !</li>
+                                </ol>
+                                <p style="margin-top: 15px; color: #666; font-size: 14px;">
+                                    💡 <strong>Astuce :</strong> Vous pouvez prendre une photo du QR Code et l'envoyer par WhatsApp !
+                                </p>
+                            </div>
+                            
+                            <button class="btn-generate-qr" onclick="hideQRCode()" style="background: #f44336;">
+                                ✕ Fermer
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Section QR Code pour synchronisation COMPLÈTE -->
+                    <div class="qr-section" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-color: #FF9800; margin-top: 30px;">
+                        <h3 style="color: #E65100;">🔄 Synchronisation COMPLÈTE (QR Code)</h3>
+                        <p style="color: #E65100; font-size: 16px; margin-bottom: 20px;">
+                            ✅ Synchronise TOUT : Employés + Heures + Compteurs + Chantiers<br>
+                            ⚠️ <strong>Utiliser en cas de problème ou pour restaurer des données</strong>
+                        </p>
+                        
+                        <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #FF9800;">
+                            <h4 style="color: #E65100; margin-bottom: 10px;">⚠️ Attention :</h4>
+                            <ul style="color: #666; margin-left: 20px;">
+                                <li>Cette option remplace TOUTES les données du salarié</li>
+                                <li>À utiliser pour :
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li>Restaurer des données perdues</li>
+                                        <li>Synchroniser un nouveau téléphone</li>
+                                        <li>Résoudre des problèmes de données</li>
+                                    </ul>
+                                </li>
+                                <li>Le QR Code peut être volumineux (plus difficile à scanner)</li>
+                            </ul>
+                        </div>
+                        
+                        <button class="btn-generate-qr" onclick="generateFullSyncQR()" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);">
+                            🔄 Générer QR Code (TOUT synchroniser)
+                        </button>
+                        
+                        <div id="qrDisplayFull" style="display: none; margin-top: 20px;">
+                            <div id="qrcodeCanvasFull" class="qr-display" style="padding: 40px;"></div>
+                            
+                            <div class="qr-instructions" style="border-left-color: #FF9800;">
+                                <h4 style="color: #E65100;">📋 Ce QR Code contient :</h4>
+                                <ul style="margin-left: 20px; color: #555;">
+                                    <li>✅ Tous les employés</li>
+                                    <li>✅ Toutes les heures de travail</li>
+                                    <li>✅ Tous les compteurs d'heures sup</li>
+                                    <li>✅ Historique des chantiers</li>
+                                </ul>
+                                <p style="margin-top: 15px; color: #E65100; font-size: 14px; font-weight: 600;">
+                                    ⚠️ Le salarié qui scanne ce QR Code verra ses données actuelles REMPLACÉES par celles-ci !
+                                </p>
+                            </div>
+                            
+                            <button class="btn-generate-qr" onclick="hideFullQRCode()" style="background: #f44336;">
+                                ✕ Fermer
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="gestion-salaries-section">
                         <h3>👥 Gestion des Salariés</h3>
                         
@@ -3039,7 +3291,240 @@
         // Pas besoin de hooks, on appellera updateWeeksSelector manuellement
         
         // ========================================
-        // FIN DES NOUVELLES FONCTIONS
+        // FONCTIONS QR CODE
+        // ========================================
+        
+        var html5QrcodeScanner = null;
+        
+        // Fonction pour générer le QR Code des employés uniquement (Patron)
+        function generateEmployeesQR() {
+            // Préparer les données à encoder
+            var qrData = {
+                type: 'employees_sync',
+                version: '2.2',
+                timestamp: new Date().toISOString(),
+                employees: employees,
+                date: new Date().toLocaleDateString('fr-FR')
+            };
+            
+            var jsonData = JSON.stringify(qrData);
+            
+            // Encoder en base64 pour l'URL
+            var base64Data = btoa(unescape(encodeURIComponent(jsonData)));
+            
+            // Afficher la zone QR
+            document.getElementById('qrDisplay').style.display = 'block';
+            
+            // Générer le QR Code via une image
+            var canvas = document.getElementById('qrcodeCanvas');
+            var img = document.createElement('img');
+            img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(jsonData);
+            img.style.width = '300px';
+            img.style.height = '300px';
+            img.onerror = function() {
+                alert('❌ Erreur lors de la génération du QR Code. Vérifiez votre connexion Internet.');
+            };
+            
+            // Remplacer le canvas par l'image
+            canvas.parentNode.innerHTML = '<div style="padding: 30px; background: white; border-radius: 15px; display: inline-block;"><img src="' + img.src + '" style="width: 300px; height: 300px;"></div>';
+            
+            // Scroll vers le QR Code
+            setTimeout(function() {
+                document.getElementById('qrDisplay').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+            
+            console.log('✅ QR Code généré avec succès');
+        }
+        
+        // NOUVELLE FONCTION : Synchronisation COMPLÈTE (tout)
+        function generateFullSyncQR() {
+            // Préparer TOUTES les données
+            var qrData = {
+                type: 'full_sync',
+                version: '2.2',
+                timestamp: new Date().toISOString(),
+                employees: employees,
+                timeEntries: timeEntries,
+                compteurInitial: compteurInitial,
+                chantiersHistory: chantiersHistory,
+                chantierZones: chantierZones,
+                date: new Date().toLocaleDateString('fr-FR')
+            };
+            
+            var jsonData = JSON.stringify(qrData);
+            
+            // Vérifier la taille des données
+            if (jsonData.length > 2000) {
+                alert('⚠️ Attention : Les données sont volumineuses.\n\nIl est recommandé d\'utiliser l\'export WhatsApp classique pour les données complètes.\n\nLe QR Code va quand même être généré, mais il sera complexe et pourrait être difficile à scanner.');
+            }
+            
+            // Afficher la zone QR
+            document.getElementById('qrDisplayFull').style.display = 'block';
+            
+            // Générer le QR Code via une image
+            var container = document.getElementById('qrcodeCanvasFull');
+            var img = document.createElement('img');
+            img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(jsonData);
+            img.style.width = '400px';
+            img.style.height = '400px';
+            img.onerror = function() {
+                alert('❌ Erreur lors de la génération du QR Code. Vérifiez votre connexion Internet.');
+            };
+            
+            // Remplacer le canvas par l'image
+            container.innerHTML = '<div style="padding: 30px; background: white; border-radius: 15px; display: inline-block;"><img src="' + img.src + '" style="width: 400px; height: 400px;"></div>';
+            
+            // Scroll vers le QR Code
+            setTimeout(function() {
+                document.getElementById('qrDisplayFull').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+            
+            console.log('✅ QR Code complet généré avec succès');
+        }
+        
+        // Fonction pour masquer le QR Code employés
+        function hideQRCode() {
+            document.getElementById('qrDisplay').style.display = 'none';
+        }
+        
+        // Fonction pour masquer le QR Code complet
+        function hideFullQRCode() {
+            document.getElementById('qrDisplayFull').style.display = 'none';
+        }
+        
+        // Fonction pour ouvrir le scanner QR (Salarié)
+        function openQRScanner() {
+            var container = document.getElementById('scannerContainer');
+            container.classList.add('active');
+            
+            // Masquer le message de succès s'il est affiché
+            document.getElementById('scanSuccess').classList.remove('show');
+            
+            // Initialiser le scanner
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5Qrcode("qr-reader");
+            }
+            
+            // Démarrer le scan
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, // Caméra arrière
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                onScanSuccess,
+                onScanFailure
+            ).catch(function(err) {
+                console.error('Erreur démarrage scanner:', err);
+                alert('❌ Impossible d\'accéder à la caméra. Vérifiez les permissions.');
+            });
+            
+            // Scroll vers le scanner
+            container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Fonction appelée quand le scan réussit
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log('QR Code scanné:', decodedText);
+            
+            try {
+                // Parser les données
+                var qrData = JSON.parse(decodedText);
+                
+                // Vérifier le type de synchronisation
+                if (qrData.type === 'employees_sync') {
+                    // Synchronisation des employés uniquement
+                    employees = qrData.employees;
+                    localStorage.setItem('employees', JSON.stringify(employees));
+                    
+                    // Arrêter le scanner
+                    closeQRScanner();
+                    
+                    // Afficher le message de succès
+                    var successMsg = document.getElementById('scanSuccess');
+                    successMsg.textContent = '✅ Mise à jour réussie ! La liste des employés a été synchronisée.';
+                    successMsg.classList.add('show');
+                    
+                    // Mettre à jour l'affichage
+                    updateLoginButtons();
+                    
+                    console.log('✅ Employés mis à jour avec succès');
+                    
+                } else if (qrData.type === 'full_sync') {
+                    // Synchronisation COMPLÈTE
+                    employees = qrData.employees;
+                    timeEntries = qrData.timeEntries || {};
+                    compteurInitial = qrData.compteurInitial || {};
+                    chantiersHistory = qrData.chantiersHistory || [];
+                    chantierZones = qrData.chantierZones || {};
+                    
+                    // Sauvegarder tout
+                    localStorage.setItem('employees', JSON.stringify(employees));
+                    localStorage.setItem('timeEntries', JSON.stringify(timeEntries));
+                    localStorage.setItem('compteurInitial', JSON.stringify(compteurInitial));
+                    localStorage.setItem('chantiersHistory', JSON.stringify(chantiersHistory));
+                    localStorage.setItem('chantierZones', JSON.stringify(chantierZones));
+                    
+                    // Arrêter le scanner
+                    closeQRScanner();
+                    
+                    // Afficher le message de succès détaillé
+                    var successMsg = document.getElementById('scanSuccess');
+                    successMsg.innerHTML = '✅ <strong>Synchronisation complète réussie !</strong><br>' +
+                                          '• Employés mis à jour<br>' +
+                                          '• Heures synchronisées<br>' +
+                                          '• Compteurs restaurés<br>' +
+                                          '• Chantiers importés';
+                    successMsg.classList.add('show');
+                    
+                    // Mettre à jour l'affichage
+                    updateLoginButtons();
+                    if (currentUser && currentUser !== 'patron') {
+                        showEmployeeTimesheet();
+                        updateWeeksSelector();
+                    }
+                    
+                    console.log('✅ Synchronisation complète réussie');
+                    
+                } else {
+                    alert('❌ Type de QR Code non reconnu');
+                    return;
+                }
+                
+                // Masquer le message après 7 secondes
+                setTimeout(function() {
+                    document.getElementById('scanSuccess').classList.remove('show');
+                }, 7000);
+                
+            } catch (error) {
+                console.error('Erreur parsing QR:', error);
+                alert('❌ QR Code invalide ou corrompu\n\n' + error.message);
+            }
+        }
+        
+        // Fonction appelée en cas d'échec du scan
+        function onScanFailure(error) {
+            // Ne rien faire - c'est normal pendant le scan
+        }
+        
+        // Fonction pour fermer le scanner
+        function closeQRScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(function() {
+                    document.getElementById('scannerContainer').classList.remove('active');
+                    html5QrcodeScanner = null;
+                }).catch(function(err) {
+                    console.error('Erreur arrêt scanner:', err);
+                    document.getElementById('scannerContainer').classList.remove('active');
+                    html5QrcodeScanner = null;
+                });
+            } else {
+                document.getElementById('scannerContainer').classList.remove('active');
+            }
+        }
+        
+        // ========================================
+        // FIN FONCTIONS QR CODE
         // ========================================
         
         // Fonction mot de passe Patron
