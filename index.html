@@ -635,6 +635,65 @@
                     <div id="newMonthInfo" style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 6px; font-size: 13px; color: #856404; display: none;">
                         ℹ️ Le changement de mois sera disponible après le 25
                     </div>
+                    
+                    <!-- Affichage du fichier exporté -->
+                    <div id="exportDisplay" style="display: none; margin-top: 20px; padding: 20px; background: #e8f5e9; border-radius: 10px; border: 2px solid #4CAF50;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 15px;">
+                            <div style="flex: 1;">
+                                <p style="margin: 0 0 15px 0; font-size: 14px; color: #2e7d32; font-weight: 600;">
+                                    ✅ Export réussi !
+                                </p>
+                                
+                                <!-- Nom du fichier -->
+                                <div style="margin-bottom: 15px; padding: 12px; background: white; border: 2px solid #4CAF50; border-radius: 8px;">
+                                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">📄 Fichier :</div>
+                                    <div id="exportFileName" style="font-weight: 600; color: #333; word-break: break-all;"></div>
+                                </div>
+                                
+                                <!-- Boutons d'action -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                                    <button onclick="copyExportData()" id="exportCopyBtn" style="
+                                        padding: 12px;
+                                        background: #2196F3;
+                                        color: white;
+                                        border: none;
+                                        border-radius: 8px;
+                                        cursor: pointer;
+                                        font-size: 14px;
+                                        font-weight: 600;
+                                        transition: all 0.3s;
+                                    ">
+                                        📋 Copier
+                                    </button>
+                                    
+                                    <button onclick="shareToWhatsApp()" id="exportWhatsAppBtn" style="
+                                        padding: 12px;
+                                        background: #25D366;
+                                        color: white;
+                                        border: none;
+                                        border-radius: 8px;
+                                        cursor: pointer;
+                                        font-size: 14px;
+                                        font-weight: 600;
+                                        transition: all 0.3s;
+                                    ">
+                                        📱 WhatsApp
+                                    </button>
+                                </div>
+                                
+                                <p style="margin: 0; font-size: 11px; color: #666; line-height: 1.4;">
+                                    💡 <strong>Copier :</strong> copie dans le presse-papier<br>
+                                    💡 <strong>WhatsApp :</strong> ouvre WhatsApp avec les données
+                                </p>
+                            </div>
+                            <button onclick="hideExportDisplay()" style="padding: 8px 16px; background: #ff6b6b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; flex-shrink: 0;">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Contenu JSON caché pour la copie -->
+                    <textarea id="exportContent" style="position: absolute; left: -9999px;"></textarea>
                 </div>
 
                 <div class="input-form">
@@ -738,17 +797,49 @@
   <p id="passwordMessage" style="color: #e3ff00; margin-top: 12px; font-weight: 700;"></p>
 </div>
 
-                <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 3px solid #43e97b;">
-                    <h3 style="color: #43e97b; margin-bottom: 15px;">📥 Importer les données des salariés</h3>
-                    <div style="display: flex; gap: 15px; align-items: center;">
-                        <input type="file" id="importFile" accept=".json" style="flex: 1; padding: 12px; border: 2px solid #43e97b; border-radius: 8px; font-size: 14px;">
-                        <button onclick="doImportData()" style="padding: 12px 30px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;">
-                            📥 Importer
-                        </button>
+                <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 3px solid #43e97b;">
+                    <h3 style="color: #43e97b; margin-bottom: 20px; font-size: 22px;">📥 Importer les données des salariés</h3>
+                    
+                    <!-- Option 1: Import par fichier -->
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h4 style="color: #333; margin-bottom: 15px; font-size: 16px;">📁 Option 1 : Importer un fichier .json</h4>
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <input type="file" id="importFile" accept=".json" style="flex: 1; min-width: 250px; padding: 12px; border: 2px solid #43e97b; border-radius: 8px; font-size: 14px;">
+                            <button onclick="doImportData()" style="padding: 12px 30px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                                📥 Importer le fichier
+                            </button>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                            💾 Pour les fichiers téléchargés ou reçus par email
+                        </p>
                     </div>
-                    <p style="margin-top: 10px; font-size: 12px; color: #666;">
-                        ℹ️ Importez les fichiers hebdomadaires ou mensuels envoyés par vos salariés
-                    </p>
+                    
+                    <!-- Option 2: Import par copier-coller -->
+                    <div style="background: white; padding: 20px; border-radius: 10px;">
+                        <h4 style="color: #333; margin-bottom: 15px; font-size: 16px;">📋 Option 2 : Coller directement le JSON</h4>
+                        <textarea id="importTextarea" placeholder="Collez ici le contenu JSON reçu par WhatsApp ou autre..." style="
+                            width: 100%;
+                            height: 150px;
+                            padding: 12px;
+                            border: 2px solid #43e97b;
+                            border-radius: 8px;
+                            font-family: 'Courier New', monospace;
+                            font-size: 12px;
+                            resize: vertical;
+                            margin-bottom: 10px;
+                        "></textarea>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="doImportFromText()" style="flex: 1; padding: 12px 30px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                                📥 Importer le texte
+                            </button>
+                            <button onclick="clearImportText()" style="padding: 12px 20px; background: #ff6b6b; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600;">
+                                🗑️ Effacer
+                            </button>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                            📱 Pour les messages WhatsApp ou textes copiés
+                        </p>
+                    </div>
                 </div>
 
                 <div class="pdf-export-section">
@@ -2354,17 +2445,30 @@
             };
             
             var dataStr = JSON.stringify(exportData, null, 2);
+            
+            // Nom du fichier
+            var fileName = currentUser + '_semaine_' + currentWeek + '_' + now.getFullYear() + '.json';
+            
+            // Télécharger le fichier
             var dataBlob = new Blob([dataStr], {type: 'application/json'});
             var url = URL.createObjectURL(dataBlob);
             var link = document.createElement('a');
             link.href = url;
-            link.download = currentUser + '_semaine_' + currentWeek + '_' + now.getFullYear() + '.json';
+            link.download = fileName;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
             
-            alert('✅ Semaine ' + currentWeek + ' exportée !\n\n' + weekEntries.length + ' jours enregistrés.\n\nEnvoyez le fichier à votre patron.');
+            // Stocker le contenu pour la copie et afficher le nom du fichier
+            document.getElementById('exportContent').value = dataStr;
+            document.getElementById('exportFileName').textContent = fileName;
+            document.getElementById('exportDisplay').style.display = 'block';
+            
+            // Scroll vers la zone d'affichage
+            document.getElementById('exportDisplay').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            alert('✅ Semaine ' + currentWeek + ' exportée !\n\n' + weekEntries.length + ' jours enregistrés.\n\n📥 Fichier téléchargé\n📋 Cliquez sur le nom du fichier pour copier son contenu');
         }
 
         function doNewMonth() {
@@ -2441,76 +2545,8 @@
             
             var reader = new FileReader();
             reader.onload = function(e) {
-                try {
-                    var importData = JSON.parse(e.target.result);
-                    
-                    if (!importData.salarie || !importData.entries) {
-                        alert('Fichier invalide : structure incorrecte');
-                        return;
-                    }
-                    
-                    var salarie = importData.salarie;
-                    var importedEntries = importData.entries;
-                    
-                    if (!timeEntries[salarie]) {
-                        timeEntries[salarie] = [];
-                    }
-                    
-                    var addedCount = 0;
-                    var updatedCount = 0;
-                    
-                    for (var i = 0; i < importedEntries.length; i++) {
-                        var importEntry = importedEntries[i];
-                        
-                        var existingIndex = -1;
-                        for (var j = 0; j < timeEntries[salarie].length; j++) {
-                            if (timeEntries[salarie][j].date === importEntry.date) {
-                                existingIndex = j;
-                                break;
-                            }
-                        }
-                        
-                        if (existingIndex >= 0) {
-                            timeEntries[salarie][existingIndex] = importEntry;
-                            updatedCount++;
-                        } else {
-                            timeEntries[salarie].push(importEntry);
-                            addedCount++;
-                        }
-                    }
-                    
-                    if (importData.compteurInitial !== undefined) {
-                        compteurInitial[salarie] = importData.compteurInitial;
-                    }
-                    
-                    saveData();
-                    
-                    if (selectedEmployee === salarie) {
-                        showEmployeeStats();
-                        showPatronTimesheet();
-                    }
-                    
-                    showOverview();
-                    
-                    var emp = employees[salarie];
-                    var displayName = emp ? emp.nom + ' ' + emp.prenom : salarie;
-                    var message = '✅ Import réussi !\n\n';
-                    message += 'Salarié : ' + displayName + '\n';
-                    if (importData.semaine) {
-                        message += 'Semaine : ' + importData.semaine + '\n';
-                    }
-                    message += '\n📊 Résultat :\n';
-                    message += '• ' + addedCount + ' nouvelles entrées\n';
-                    message += '• ' + updatedCount + ' entrées mises à jour';
-                    
-                    alert(message);
-                    
-                    fileInput.value = '';
-                    
-                } catch (error) {
-                    alert('Erreur lors de l\'import : ' + error.message);
-                    console.error(error);
-                }
+                processImportData(e.target.result);
+                fileInput.value = '';
             };
             
             reader.onerror = function() {
@@ -2518,6 +2554,102 @@
             };
             
             reader.readAsText(file);
+        }
+
+        function doImportFromText() {
+            if (currentUser !== 'patron') {
+                alert('Cette fonction est réservée au patron');
+                return;
+            }
+            
+            var textarea = document.getElementById('importTextarea');
+            var jsonText = textarea.value.trim();
+            
+            if (!jsonText) {
+                alert('Veuillez coller du contenu JSON dans la zone de texte');
+                return;
+            }
+            
+            // Nettoyer le texte si c'est un message WhatsApp avec des balises markdown
+            jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            
+            processImportData(jsonText);
+            textarea.value = '';
+        }
+
+        function clearImportText() {
+            document.getElementById('importTextarea').value = '';
+        }
+
+        function processImportData(jsonString) {
+            try {
+                var importData = JSON.parse(jsonString);
+                
+                if (!importData.salarie || !importData.entries) {
+                    alert('Fichier invalide : structure incorrecte');
+                    return;
+                }
+                
+                var salarie = importData.salarie;
+                var importedEntries = importData.entries;
+                
+                if (!timeEntries[salarie]) {
+                    timeEntries[salarie] = [];
+                }
+                
+                var addedCount = 0;
+                var updatedCount = 0;
+                
+                for (var i = 0; i < importedEntries.length; i++) {
+                    var importEntry = importedEntries[i];
+                    
+                    var existingIndex = -1;
+                    for (var j = 0; j < timeEntries[salarie].length; j++) {
+                        if (timeEntries[salarie][j].date === importEntry.date) {
+                            existingIndex = j;
+                            break;
+                        }
+                    }
+                    
+                    if (existingIndex >= 0) {
+                        timeEntries[salarie][existingIndex] = importEntry;
+                        updatedCount++;
+                    } else {
+                        timeEntries[salarie].push(importEntry);
+                        addedCount++;
+                    }
+                }
+                
+                if (importData.compteurInitial !== undefined) {
+                    compteurInitial[salarie] = importData.compteurInitial;
+                }
+                
+                saveData();
+                
+                if (selectedEmployee === salarie) {
+                    showEmployeeStats();
+                    showPatronTimesheet();
+                }
+                
+                showOverview();
+                
+                var emp = employees[salarie];
+                var displayName = emp ? emp.nom + ' ' + emp.prenom : salarie;
+                var message = '✅ Import réussi !\n\n';
+                message += 'Salarié : ' + displayName + '\n';
+                if (importData.semaine) {
+                    message += 'Semaine : ' + importData.semaine + '\n';
+                }
+                message += '\n📊 Résultat :\n';
+                message += '• ' + addedCount + ' nouvelles entrées\n';
+                message += '• ' + updatedCount + ' entrées mises à jour';
+                
+                alert(message);
+                
+            } catch (error) {
+                alert('❌ Erreur lors de l\'import : ' + error.message + '\n\nVérifiez que le JSON est valide.');
+                console.error(error);
+            }
         }
 
         var originalDoLogin = doLogin;
@@ -2576,6 +2708,91 @@ function updatePatronPassword() {
   message.style.color = "green";
   message.textContent = "Mot de passe modifié avec succès!";
   newPasswordInput.value = "";
+}
+
+// Fonction pour copier le contenu JSON dans le presse-papier
+function copyExportData() {
+  var exportContent = document.getElementById('exportContent');
+  var btn = document.getElementById('exportCopyBtn');
+  
+  // Utiliser l'API Clipboard moderne si disponible
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(exportContent.value).then(function() {
+      // Feedback visuel sur le bouton
+      var originalHTML = btn.innerHTML;
+      btn.innerHTML = '✅ Copié !';
+      btn.style.background = '#4CAF50';
+      
+      setTimeout(function() {
+        btn.innerHTML = originalHTML;
+        btn.style.background = '#2196F3';
+      }, 2000);
+    }).catch(function() {
+      alert('❌ Erreur lors de la copie. Veuillez réessayer.');
+    });
+  } else {
+    // Fallback pour navigateurs plus anciens
+    exportContent.style.position = 'static';
+    exportContent.style.left = '0';
+    exportContent.select();
+    exportContent.setSelectionRange(0, 99999);
+    
+    try {
+      document.execCommand('copy');
+      exportContent.style.position = 'absolute';
+      exportContent.style.left = '-9999px';
+      
+      var originalHTML = btn.innerHTML;
+      btn.innerHTML = '✅ Copié !';
+      btn.style.background = '#4CAF50';
+      
+      setTimeout(function() {
+        btn.innerHTML = originalHTML;
+        btn.style.background = '#2196F3';
+      }, 2000);
+    } catch (err) {
+      exportContent.style.position = 'absolute';
+      exportContent.style.left = '-9999px';
+      alert('❌ Erreur lors de la copie. Veuillez réessayer.');
+    }
+  }
+}
+
+// Fonction pour partager via WhatsApp
+function shareToWhatsApp() {
+  var exportContent = document.getElementById('exportContent').value;
+  var fileName = document.getElementById('exportFileName').textContent;
+  
+  // Message d'introduction
+  var message = '📊 *Relevé d\'heures - ' + fileName + '*\n\n```\n' + exportContent + '\n```';
+  
+  // Encoder le message pour URL
+  var encodedMessage = encodeURIComponent(message);
+  
+  // URL WhatsApp (fonctionne sur mobile et desktop)
+  var whatsappURL = 'https://wa.me/?text=' + encodedMessage;
+  
+  // Sur mobile, utiliser l'URL scheme WhatsApp
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    whatsappURL = 'whatsapp://send?text=' + encodedMessage;
+  }
+  
+  // Ouvrir WhatsApp
+  window.open(whatsappURL, '_blank');
+  
+  // Feedback visuel
+  var btn = document.getElementById('exportWhatsAppBtn');
+  var originalHTML = btn.innerHTML;
+  btn.innerHTML = '✅ Envoyé !';
+  
+  setTimeout(function() {
+    btn.innerHTML = originalHTML;
+  }, 2000);
+}
+
+// Fonction pour masquer la zone d'affichage de l'export
+function hideExportDisplay() {
+  document.getElementById('exportDisplay').style.display = 'none';
 }
 
 
