@@ -2797,5 +2797,116 @@ function hideExportDisplay() {
 
 
     </script>
+    <!-- ====== BOUTONS EXPORT / WHATSAPP / COPIER ====== -->
+<div id="exporter-zone" style="margin:16px 0;padding:12px;border:1px solid #ddd;border-radius:12px">
+  <h3>Export fiche hebdo</h3>
+
+  <!-- Tu peux dupliquer cette zone par salarié si besoin -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+    <button id="btn-exporter">Exporter (.html)</button>
+    <button id="btn-whatsapp">WhatsApp (PJ .html)</button>
+    <button id="btn-copier">Copier (message)</button>
+  </div>
+
+  <p id="hint" style="font-size:0.9em;color:#555;margin-top:6px"></p>
+</div>
+
+<script>
+/** === PARAMÈTRES (à adapter) === */
+const EMPLOYEE = "Enzo";   // nom affiché
+const YEAR = 2025;         // année à exporter
+const WEEK = 42;           // semaine ISO à exporter (numéro)
+
+/** === GÉNÈRE TON HTML (remplace le tableau par ta fiche réelle) === */
+function buildHtml() {
+  const title = `Fiche ${EMPLOYEE} — S${String(WEEK).padStart(2,'0')} ${YEAR}`;
+  return `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><title>${title}</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:16px}
+  h1{margin:0 0 12px}
+  table{border-collapse:collapse;width:100%;margin-top:12px}
+  th,td{border:1px solid #ddd;padding:8px;text-align:left}
+</style>
+</head>
+<body>
+  <h1>${title}</h1>
+  <p>Document exporté automatiquement depuis l’application.</p>
+  <!-- 🔁 Remplace ce tableau par tes vraies données -->
+  <table>
+    <tr><th>Jour</th><th>Heures</th></tr>
+    <tr><td>Lundi</td><td>7h45</td></tr>
+    <tr><td>Mardi</td><td>8h00</td></tr>
+    <tr><td>Mercredi</td><td>7h30</td></tr>
+    <tr><td>Jeudi</td><td>7h45</td></tr>
+    <tr><td>Vendredi</td><td>4h00</td></tr>
+  </table>
+  <p>Total semaine : <b>35h</b></p>
+</body>
+</html>`;
+}
+
+function buildFile() {
+  const name = `${EMPLOYEE}_S${String(WEEK).padStart(2,'0')}_${YEAR}.html`;
+  const blob = new Blob([buildHtml()], { type: "text/html" });
+  return new File([blob], name, { type: "text/html" });
+}
+
+/** === 1) EXPORTER : TÉLÉCHARGER LE FICHIER .HTML === */
+document.getElementById('btn-exporter').addEventListener('click', () => {
+  const f = buildFile();
+  const url = URL.createObjectURL(f);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = f.name; // force le téléchargement comme fichier
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  document.getElementById('hint').textContent =
+    "Fichier téléchargé (sur iPhone : Fichiers → iCloud/Sur mon iPhone → Downloads).";
+});
+
+/** === 2) WHATSAPP : PARTAGE AVEC PJ .HTML (via feuille de partage) === */
+document.getElementById('btn-whatsapp').addEventListener('click', async () => {
+  const f = buildFile();
+  const hint = document.getElementById('hint');
+
+  if (navigator.canShare && navigator.canShare({ files: [f] })) {
+    try {
+      await navigator.share({
+        files: [f],
+        title: "Fiche hebdo",
+        text: "Choisis WhatsApp pour envoyer la pièce jointe."
+      });
+      hint.textContent = "Partage lancé : choisis WhatsApp dans la feuille de partage.";
+    } catch (e) {
+      hint.textContent = "Partage annulé.";
+    }
+  } else {
+    // Fallback : ouvre WhatsApp sans PJ (limitation des navigateurs) avec un message
+    const msg = encodeURIComponent(`Fiche ${EMPLOYEE} S${String(WEEK).padStart(2,'0')} ${YEAR} — joindre le fichier exporté (.html).`);
+    location.href = `https://wa.me/?text=${msg}`;
+    hint.textContent = "Cet appareil ne permet pas la PJ directe. WhatsApp ouvert sans PJ.";
+  }
+});
+
+/** === 3) COPIER : MESSAGE PRÊT-À-ENVOYER (pas la PJ) === */
+document.getElementById('btn-copier').addEventListener('click', async () => {
+  const name = `${EMPLOYEE}_S${String(WEEK).padStart(2,'0')}_${YEAR}.html`;
+  const text = `Fiche ${EMPLOYEE} — Semaine ${WEEK} ${YEAR}\nPièce jointe : ${name}\n(Envoyer via WhatsApp/Mail en joignant le fichier exporté)`;
+  try {
+    await navigator.clipboard.writeText(text);
+    document.getElementById('hint').textContent = "Message copié. Ouvre WhatsApp/Mail et colle, puis ajoute la PJ .html.";
+  } catch {
+    document.getElementById('hint').textContent = "Impossible de copier automatiquement (permissions). Sélectionne et copie manuellement.";
+  }
+});
+</script>
+<!-- ====== FIN DES BOUTONS ====== -->
+
 </body>
 </html>
