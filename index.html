@@ -222,6 +222,130 @@
             color: white;
         }
         
+        /* Styles pour la sélection des semaines */
+        .export-section {
+            background: #f0f7ff;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 2px solid #667eea;
+        }
+        .export-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .weeks-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .week-checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.2s;
+        }
+        .week-checkbox-item:hover {
+            background: #e8f4ff;
+            border-color: #667eea;
+        }
+        .week-checkbox-item.selected {
+            background: #e8f4ff;
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+        .week-checkbox-item input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        .week-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .week-label {
+            font-weight: 600;
+            color: #333;
+            font-size: 15px;
+            margin-bottom: 3px;
+        }
+        .week-details {
+            font-size: 13px;
+            color: #666;
+        }
+        .export-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .btn-select-all {
+            padding: 12px 25px;
+            background: #43e97b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-select-all:hover {
+            background: #38d66b;
+            transform: translateY(-2px);
+        }
+        .btn-export-whatsapp {
+            padding: 15px 30px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            flex: 1;
+            justify-content: center;
+            min-width: 200px;
+        }
+        .btn-export-whatsapp:hover {
+            background: #20ba5a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+        }
+        .btn-export-whatsapp:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .selection-summary {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .selection-summary strong {
+            color: #667eea;
+            font-size: 16px;
+        }
+        
         .patron-dashboard {
             display: none;
         }
@@ -694,6 +818,25 @@
                     
                     <!-- Contenu JSON caché pour la copie -->
                     <textarea id="exportContent" style="position: absolute; left: -9999px;"></textarea>
+                </div>
+
+                <!-- NOUVELLE SECTION: Sélection et export de semaines -->
+                <div class="export-section">
+                    <h3>📤 Envoyer mes heures via WhatsApp</h3>
+                    <div class="selection-summary">
+                        <strong>Sélectionnez les semaines à envoyer :</strong>
+                        <span id="selectionCount" style="margin-left: 10px; color: #666;">Aucune semaine sélectionnée</span>
+                    </div>
+                    <div class="weeks-selector" id="weeksSelector">
+                        <p style="text-align: center; color: #999; padding: 20px;">Aucune donnée disponible</p>
+                    </div>
+                    <div class="export-actions">
+                        <button class="btn-select-all" onclick="toggleSelectAllWeeks()">✓ Tout sélectionner / Tout désélectionner</button>
+                        <button class="btn-export-whatsapp" onclick="exportSelectedWeeksToWhatsApp()" id="btnExportWhatsApp" disabled>
+                            <span style="font-size: 24px;">📱</span>
+                            Envoyer via WhatsApp
+                        </button>
+                    </div>
                 </div>
 
                 <div class="input-form">
@@ -1350,6 +1493,19 @@
             var yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
             return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
         }
+        
+        function getWeekNumber(dateStr) {
+            var d = new Date(dateStr + 'T12:00:00');
+            var date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            var dayNum = date.getUTCDay() || 7;
+            date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+            var yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+            var weekNum = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+            return {
+                week: weekNum,
+                year: date.getUTCFullYear()
+            };
+        }
 
         function formatH(h) {
             var abs = Math.abs(h);
@@ -1942,6 +2098,9 @@
             }
             
             tbody.innerHTML = html;
+            
+            // Mettre à jour la liste des semaines disponibles pour l'export
+            updateWeeksSelector();
         }
 
         function doDeleteEntry(id) {
@@ -1955,6 +2114,7 @@
                 timeEntries[currentUser] = filtered;
                 saveData();
                 showEmployeeTimesheet();
+                updateWeeksSelector();  // Mettre à jour la liste des semaines
             }
         }
 
@@ -2636,13 +2796,17 @@
                 var emp = employees[salarie];
                 var displayName = emp ? emp.nom + ' ' + emp.prenom : salarie;
                 var message = '✅ Import réussi !\n\n';
-                message += 'Salarié : ' + displayName + '\n';
-                if (importData.semaine) {
-                    message += 'Semaine : ' + importData.semaine + '\n';
+                message += '👤 Salarié : ' + displayName + '\n';
+                if (importData.periodeExport) {
+                    message += '📅 Période : ' + importData.periodeExport + '\n';
+                }
+                if (importData.semaines) {
+                    message += '📋 Semaines : ' + importData.semaines + '\n';
                 }
                 message += '\n📊 Résultat :\n';
-                message += '• ' + addedCount + ' nouvelles entrées\n';
-                message += '• ' + updatedCount + ' entrées mises à jour';
+                message += '✅ ' + addedCount + ' nouvelles entrées ajoutées\n';
+                message += '🔄 ' + updatedCount + ' entrées mises à jour\n';
+                message += '📈 Total : ' + (addedCount + updatedCount) + ' jours importés';
                 
                 alert(message);
                 
@@ -2668,6 +2832,216 @@
 
         loadData();
         updateLoginButtons();
+        
+        // ========================================
+        // NOUVELLES FONCTIONS: Export de semaines multiples
+        // ========================================
+        
+        var selectedWeeks = [];
+        
+        // Fonction appelée après chaque ajout/suppression/login pour régénérer la liste
+        function updateWeeksSelector() {
+            if (currentUser === 'patron') return; // Pas pour le patron
+            
+            var selector = document.getElementById('weeksSelector');
+            if (!selector) return;
+            
+            var entries = timeEntries[currentUser] || [];
+            if (entries.length === 0) {
+                selector.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Aucune donnée disponible. Ajoutez des heures pour pouvoir les exporter.</p>';
+                updateSelectionCount();
+                return;
+            }
+            
+            // Grouper les entrées par semaine
+            var weekGroups = {};
+            for (var i = 0; i < entries.length; i++) {
+                var entry = entries[i];
+                var weekNum = getWeekNumber(entry.date);
+                var weekKey = weekNum.year + '-W' + (weekNum.week < 10 ? '0' : '') + weekNum.week;
+                
+                if (!weekGroups[weekKey]) {
+                    weekGroups[weekKey] = {
+                        weekKey: weekKey,
+                        weekNum: weekNum,
+                        entries: [],
+                        dateRange: ''
+                    };
+                }
+                weekGroups[weekKey].entries.push(entry);
+            }
+            
+            // Trier les semaines (plus récentes en premier)
+            var sortedWeeks = [];
+            for (var key in weekGroups) {
+                sortedWeeks.push(weekGroups[key]);
+            }
+            sortedWeeks.sort(function(a, b) {
+                if (a.weekNum.year !== b.weekNum.year) {
+                    return b.weekNum.year - a.weekNum.year;
+                }
+                return b.weekNum.week - a.weekNum.week;
+            });
+            
+            // Générer le HTML
+            var html = '';
+            for (var i = 0; i < sortedWeeks.length; i++) {
+                var week = sortedWeeks[i];
+                var firstDate = week.entries[0].date;
+                var lastDate = week.entries[week.entries.length - 1].date;
+                
+                // Calculer le total d'heures de la semaine
+                var totalHours = 0;
+                for (var j = 0; j < week.entries.length; j++) {
+                    totalHours += week.entries[j].heurePaye || 0;
+                }
+                
+                var isSelected = selectedWeeks.indexOf(week.weekKey) >= 0;
+                
+                html += '<div class="week-checkbox-item' + (isSelected ? ' selected' : '') + '" onclick="toggleWeekSelection(\'' + week.weekKey + '\')">';
+                html += '<input type="checkbox" ' + (isSelected ? 'checked' : '') + ' onclick="event.stopPropagation(); toggleWeekSelection(\'' + week.weekKey + '\')">';
+                html += '<div class="week-info">';
+                html += '<div class="week-label">Semaine ' + week.weekNum.week + ' - ' + week.weekNum.year + '</div>';
+                html += '<div class="week-details">';
+                html += week.entries.length + ' jour(s) • ' + totalHours.toFixed(2) + 'h • Du ' + formatDateFr(firstDate) + ' au ' + formatDateFr(lastDate);
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            selector.innerHTML = html;
+            updateSelectionCount();
+        }
+        
+        function toggleWeekSelection(weekKey) {
+            var index = selectedWeeks.indexOf(weekKey);
+            if (index >= 0) {
+                selectedWeeks.splice(index, 1);
+            } else {
+                selectedWeeks.push(weekKey);
+            }
+            updateWeeksSelector();
+        }
+        
+        function toggleSelectAllWeeks() {
+            var entries = timeEntries[currentUser] || [];
+            if (entries.length === 0) return;
+            
+            // Si tout est sélectionné, tout désélectionner, sinon tout sélectionner
+            if (selectedWeeks.length > 0) {
+                selectedWeeks = [];
+            } else {
+                // Récupérer toutes les semaines disponibles
+                var weekKeys = {};
+                for (var i = 0; i < entries.length; i++) {
+                    var weekNum = getWeekNumber(entries[i].date);
+                    var weekKey = weekNum.year + '-W' + (weekNum.week < 10 ? '0' : '') + weekNum.week;
+                    weekKeys[weekKey] = true;
+                }
+                selectedWeeks = Object.keys(weekKeys);
+            }
+            updateWeeksSelector();
+        }
+        
+        function updateSelectionCount() {
+            var countSpan = document.getElementById('selectionCount');
+            var btnExport = document.getElementById('btnExportWhatsApp');
+            
+            if (!countSpan || !btnExport) return;
+            
+            var count = selectedWeeks.length;
+            if (count === 0) {
+                countSpan.textContent = 'Aucune semaine sélectionnée';
+                countSpan.style.color = '#666';
+                btnExport.disabled = true;
+            } else {
+                countSpan.textContent = count + ' semaine(s) sélectionnée(s)';
+                countSpan.style.color = '#4CAF50';
+                countSpan.style.fontWeight = 'bold';
+                btnExport.disabled = false;
+            }
+        }
+        
+        function exportSelectedWeeksToWhatsApp() {
+            if (selectedWeeks.length === 0) {
+                alert('Veuillez sélectionner au moins une semaine');
+                return;
+            }
+            
+            var entries = timeEntries[currentUser] || [];
+            var selectedEntries = [];
+            
+            // Filtrer les entrées des semaines sélectionnées
+            for (var i = 0; i < entries.length; i++) {
+                var entry = entries[i];
+                var weekNum = getWeekNumber(entry.date);
+                var weekKey = weekNum.year + '-W' + (weekNum.week < 10 ? '0' : '') + weekNum.week;
+                
+                if (selectedWeeks.indexOf(weekKey) >= 0) {
+                    selectedEntries.push(entry);
+                }
+            }
+            
+            // Trier les entrées par date
+            selectedEntries.sort(function(a, b) {
+                return a.date.localeCompare(b.date);
+            });
+            
+            // Créer l'objet d'export
+            var exportData = {
+                salarie: currentUser,
+                nom: employees[currentUser].nom,
+                prenom: employees[currentUser].prenom,
+                periodeExport: selectedWeeks.length + ' semaine(s)',
+                semaines: selectedWeeks.sort().join(', '),
+                dateExport: new Date().toISOString(),
+                entries: selectedEntries,
+                compteurInitial: compteurInitial[currentUser] || 0
+            };
+            
+            var jsonStr = JSON.stringify(exportData, null, 2);
+            
+            // Préparer le message WhatsApp
+            var message = '📊 *Relevé d\'heures*\n\n';
+            message += '👤 ' + exportData.nom + ' ' + exportData.prenom + '\n';
+            message += '📅 ' + selectedWeeks.length + ' semaine(s) sélectionnée(s)\n';
+            message += '📋 ' + selectedEntries.length + ' jour(s) enregistré(s)\n\n';
+            message += '```json\n' + jsonStr + '\n```';
+            
+            var encodedMessage = encodeURIComponent(message);
+            var whatsappURL = 'https://wa.me/?text=' + encodedMessage;
+            
+            // Sur mobile, utiliser l'URL scheme
+            if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                whatsappURL = 'whatsapp://send?text=' + encodedMessage;
+            }
+            
+            // Ouvrir WhatsApp
+            window.open(whatsappURL, '_blank');
+            
+            // Feedback
+            var btn = document.getElementById('btnExportWhatsApp');
+            var originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span style="font-size: 24px;">✅</span> Envoyé !';
+            btn.style.background = '#20ba5a';
+            
+            setTimeout(function() {
+                btn.innerHTML = originalHTML;
+                btn.style.background = '#25D366';
+            }, 3000);
+        }
+        
+        function formatDateFr(dateStr) {
+            var parts = dateStr.split('-');
+            return parts[2] + '/' + parts[1] + '/' + parts[0];
+        }
+        
+        // Pas besoin de hooks, on appellera updateWeeksSelector manuellement
+        
+        // ========================================
+        // FIN DES NOUVELLES FONCTIONS
+        // ========================================
+        
         // Fonction mot de passe Patron
 function requestPatronPassword() {
   const enteredPassword = prompt("Veuillez entrer le mot de passe Patron :");
